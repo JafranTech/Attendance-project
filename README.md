@@ -1,61 +1,65 @@
 📱 Student Attendance Tracker (PWA)
 
-A mobile-first, offline Progressive Web App (PWA) to help students track their daily attendance accurately based on timetable, electives, batch, and periods.
+A mobile-first, offline Progressive Web App (PWA) that helps students track their daily attendance accurately based on timetable, electives, batch, and period-wise classes.
 
-This is a personal self-tracking tool, not an official college attendance system.
+⚠️ This is a personal self-attendance tracking tool, not an official college attendance system.
 
 ✨ Features
 
-📅 Day & period-based attendance (50-minute periods)
+📅 Period-based attendance (each 50-minute period counted separately)
 
-🧠 Smart timetable logic (labs split into multiple periods)
+🧠 Smart timetable handling
 
-🎓 Elective & batch-based subject loading
+Long lab blocks split into multiple periods
 
-🎉 Manual Holiday marking (excluded from attendance)
+Batch-wise subject rotation
+
+🎓 Elective & batch selection at first setup
+
+🎉 Manual Holiday marking
+
+Holidays are excluded from attendance calculation
 
 📊 Subject-wise & overall attendance percentage
 
-📴 Works fully offline
+📴 Fully offline (LocalStorage)
 
 📱 Installable as a mobile app (PWA)
 
 👤 Optional local profile (avatar + name)
 
-All data is stored locally on the device using localStorage.
-
 ⚠️ Disclaimer
 
 This project was built using vibe coding.
 
-Idea & logic design: ChatGPT
+Idea & system design: ChatGPT
 
 Code generation & refinement: Google Antigravity tool
 
-Purpose: Learning + personal use + helping friends
+Purpose: Learning, experimentation, and personal use with friends
 
-No backend, no server storage, no data collection.
+No backend. No cloud storage. No data collection.
 
-🚀 How to Run (Local)
+🚀 How to Run Locally
 Requirements
 
-Python installed
+Python installed on your system
 
 Steps
 cd Attendance project
 .\start_server.bat
 
 
-Then open:
+Then open in browser:
 
 http://127.0.0.1:8000
 
-📲 How to Install on Mobile
-✅ Android
+📲 Install on Mobile (PWA)
+🤖 Android
 
-Open the link in Chrome
+Open the app link in Chrome
 
-If install popup appears → tap Install
+If an install popup appears → tap Install
 
 If not:
 
@@ -65,37 +69,67 @@ Tap Add to Home Screen
 
 🍎 iOS (iPhone / iPad)
 
-⚠️ Chrome will NOT work
+⚠️ Chrome does NOT support PWA install on iOS
 
-Open the link in Safari
+Open the app link in Safari
 
 Tap Share (⬆️)
 
 Tap Add to Home Screen
 
-🧩 How to Adapt for Your Department / Timetable
+🧩 Adapting for Other Departments / Timetables
 
-This app supports multiple departments using the same codebase.
+This project is designed to be extensible.
 
-What you need to do:
+You can reuse the same codebase for other departments.
 
-Send your official timetable (image / PDF)
+What is needed:
 
-Mention:
+Official timetable (image or PDF)
 
 Department name
 
-Electives (if any)
+Details about:
 
-Batch splits (if any)
+Electives
 
-Then use a change-only AI prompt like:
-Apply timetable logic for <DEPARTMENT NAME>
-based on the provided timetable.
+Batch splits
 
-Split continuous blocks into exact 50-minute periods.
-Ensure labs and long classes are counted correctly.
-Do NOT affect existing logic, UI, or attendance data.
+Lab / long blocks
+
+Example AI Prompt for Customization
+
+prompt:
 
 
-The app can be extended without breaking existing departments.
+*Apply timetable logic for <DEPARTMENT NAME> based on the provided timetable.*
+
+*Split continuous blocks into exact 50-minute periods.*
+*Ensure labs and long classes are counted correctly.*
+*Do NOT modify existing UI, logic, or attendance data.*
+
+🔐 Privacy & Data Safety
+
+✅ No login / signup*
+
+✅ No server or backend
+
+✅ No internet required after install
+
+✅ All data stored locally on the device
+
+Your attendance data stays with you.
+
+🏁 Project Status
+
+✅ Stable
+
+✅ Accurate
+
+✅ Offline-ready
+
+✅ Mobile-friendly
+
+✅ Real-world usable
+
+Built by a student, for students.
