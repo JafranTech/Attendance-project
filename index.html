@@ -102,13 +102,22 @@
     <div id="app-screen" class="screen hidden">
         <header class="app-header">
             <div class="header-top">
+                <button id="prev-month" class="icon-btn">◀</button>
                 <h1 id="month-display">January</h1>
-                <button id="reset-btn" class="icon-btn" aria-label="Reset Setup">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                        <path d="M3 3v5h5" />
-                    </svg>
-                </button>
+                <button id="next-month" class="icon-btn">▶</button>
+
+                <div class="header-right">
+                    <button id="reset-btn" class="icon-btn" aria-label="Reset Setup">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                            <path d="M3 3v5h5" />
+                        </svg>
+                    </button>
+                    <button id="profile-trigger" class="profile-trigger">
+                        <!-- Injected via JS -->
+                    </button>
+                </div>
             </div>
 
             <div class="date-picker-wrapper">
@@ -140,6 +149,31 @@
                 <!-- Stats rows -->
             </div>
         </section>
+    </div>
+
+    <!-- Profile Drawer -->
+    <div id="profile-overlay" class="drawer-overlay hidden"></div>
+    <div id="profile-drawer" class="drawer">
+        <div class="drawer-header">
+            <h2>Profile</h2>
+            <button id="close-profile" class="icon-btn">✕</button>
+        </div>
+        <div class="drawer-content">
+            <div class="profile-upload">
+                <input type="file" id="avatar-input" accept="image/*" hidden>
+                <div id="avatar-preview" class="profile-preview">
+                    <!-- JS Injected -->
+                </div>
+                <label for="avatar-input" class="upload-label">Change Photo</label>
+            </div>
+
+            <div class="form-group">
+                <label>Display Name (Optional)</label>
+                <input type="text" id="profile-name" class="drawer-input" placeholder="e.g. John Doe">
+            </div>
+
+            <button id="save-profile-btn" class="btn-primary">Save Profile</button>
+        </div>
     </div>
 
     <script src="app.js"></script>
