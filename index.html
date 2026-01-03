@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -13,6 +14,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
+
 <body>
 
     <!-- Setup Screen -->
@@ -23,22 +25,28 @@
 
             <form id="setup-form">
                 <div class="form-group">
-                    <label>IT Elective</label>
+                    <label>IT Elective – Group A</label>
                     <div class="radio-group">
                         <label class="radio-card">
-                            <input type="radio" name="it_elective" value="ITDX 45" required>
+                            <input type="radio" name="it_elective_a" value="ITDX 45" required>
                             <span>ITDX 45 – Big Data Analytics</span>
                         </label>
                         <label class="radio-card">
-                            <input type="radio" name="it_elective" value="ITDX 11" required>
+                            <input type="radio" name="it_elective_a" value="ITDX 11" required>
                             <span>ITDX 11 – Intro to DevOps</span>
                         </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>IT Elective – Group B</label>
+                    <div class="radio-group">
                         <label class="radio-card">
-                            <input type="radio" name="it_elective" value="ITDX 42" required>
+                            <input type="radio" name="it_elective_b" value="ITDX 42" required>
                             <span>ITDX 42 – Programming in R</span>
                         </label>
                         <label class="radio-card">
-                            <input type="radio" name="it_elective" value="ITDX 29" required>
+                            <input type="radio" name="it_elective_b" value="ITDX 29" required>
                             <span>ITDX 29 – Industry 4.0 & IIoT</span>
                         </label>
                     </div>
@@ -49,19 +57,19 @@
                     <div class="radio-group">
                         <label class="radio-card">
                             <input type="radio" name="ssdx_elective" value="SSDX 11" required>
-                            <span>SSDX 11</span>
+                            <span>SSDX 11 – Economics of Sustainable Development</span>
                         </label>
                         <label class="radio-card">
                             <input type="radio" name="ssdx_elective" value="SSDX 12" required>
-                            <span>SSDX 12</span>
+                            <span>SSDX 12 – Sociology of Industrial Relations</span>
                         </label>
                         <label class="radio-card">
                             <input type="radio" name="ssdx_elective" value="SSDX 13" required>
-                            <span>SSDX 13</span>
+                            <span>SSDX 13 – Professional Ethics and Human Values</span>
                         </label>
                         <label class="radio-card">
                             <input type="radio" name="ssdx_elective" value="SSDX 14" required>
-                            <span>SSDX 14</span>
+                            <span>SSDX 14 – Gender, Technology and Development</span>
                         </label>
                     </div>
                 </div>
@@ -92,12 +100,12 @@
                 <h1 id="month-display">January</h1>
                 <button id="reset-btn" class="icon-btn" aria-label="Reset Setup">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-                        <path d="M3 3v5h5"/>
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                        <path d="M3 3v5h5" />
                     </svg>
                 </button>
             </div>
-            
+
             <div class="date-picker-wrapper">
                 <div id="date-scroll" class="date-scroll">
                     <!-- Dates injected via JS -->
@@ -108,7 +116,7 @@
         <main id="main-content">
             <div id="subjects-container" class="subjects-list">
                 <!-- Subject cards injected via JS -->
-                 <div class="empty-state">Select a date to view classes</div>
+                <div class="empty-state">Select a date to view classes</div>
             </div>
         </main>
 
@@ -138,4 +146,5 @@
         }
     </script>
 </body>
+
 </html>

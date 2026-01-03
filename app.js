@@ -91,7 +91,16 @@ function init() {
 
 function loadData() {
     const config = localStorage.getItem(CONFIG_KEY);
-    if (config) userConfig = JSON.parse(config);
+    if (config) {
+        userConfig = JSON.parse(config);
+        // Safety check: specific for the new IT elective split update
+        // If old config (has 'it_elective') or missing new fields, reset to force setup.
+        if (userConfig.it_elective || !userConfig.it_elective_a || !userConfig.it_elective_b) {
+            console.log("Migrating/Resetting config for new update");
+            userConfig = null;
+            localStorage.removeItem(CONFIG_KEY);
+        }
+    }
 
     const data = localStorage.getItem(DATA_KEY);
     if (data) attendanceData = JSON.parse(data);
@@ -120,7 +129,8 @@ setupForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const formData = new FormData(setupForm);
     userConfig = {
-        it_elective: formData.get('it_elective'),
+        it_elective_a: formData.get('it_elective_a'),
+        it_elective_b: formData.get('it_elective_b'),
         ssdx_elective: formData.get('ssdx_elective'),
         batch: formData.get('batch')
     };
@@ -149,16 +159,16 @@ function renderDateScroll() {
     for (let i = 1; i <= daysInMonth; i++) {
         const date = new Date(currentYear, currentMonth, i);
         const dayName = date.toLocaleString('default', { weekday: 'short' });
-        
+
         const card = document.createElement('div');
         card.className = 'date-card';
         if (i === today.getDate()) card.classList.add('selected');
-        
+
         card.innerHTML = `
             <span class="date-day">${dayName}</span>
             <span class="date-num">${i}</span>
         `;
-        
+
         card.addEventListener('click', () => {
             document.querySelectorAll('.date-card').forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
@@ -167,7 +177,7 @@ function renderDateScroll() {
 
         dateScroll.appendChild(card);
     }
-    
+
     // Scroll to today
     setTimeout(() => {
         const selected = dateScroll.querySelector('.selected');
@@ -192,7 +202,7 @@ function renderSubjects(dayOfWeek, dateObj) {
     }
 
     const slots = TIMETABLE[dayOfWeek];
-    
+
     slots.forEach(slot => {
         // Logic to determine if we show this slot
         let subjectName = null;
@@ -202,8 +212,10 @@ function renderSubjects(dayOfWeek, dateObj) {
         } else if (slot.type === 'fixed') {
             subjectName = slot.name;
         } else if (slot.type === 'elective_it') {
-            if (slot.group.includes(userConfig.it_elective)) {
-                subjectName = userConfig.it_elective;
+            if (slot.group.includes(userConfig.it_elective_a)) {
+                subjectName = userConfig.it_elective_a;
+            } else if (slot.group.includes(userConfig.it_elective_b)) {
+                subjectName = userConfig.it_elective_b;
             }
         } else if (slot.type === 'elective_ssdx') {
             subjectName = userConfig.ssdx_elective;
@@ -228,7 +240,7 @@ function createSubjectCard(time, name, type, dateKey) {
 
     const card = document.createElement('div');
     card.className = 'subject-card';
-    
+
     // Check attendance state
     const record = attendanceData[dateKey]?.[name]; // 'P' or 'A' or undefined
 
@@ -249,16 +261,16 @@ function createSubjectCard(time, name, type, dateKey) {
 }
 
 // --- Mark Attendance ---
-window.mark = function(dateKey, subject, status) {
+window.mark = function (dateKey, subject, status) {
     if (!attendanceData[dateKey]) attendanceData[dateKey] = {};
-    
+
     // Toggle logic: If clicking same status, remove it
     if (attendanceData[dateKey][subject] === status) {
         delete attendanceData[dateKey][subject];
     } else {
         attendanceData[dateKey][subject] = status;
     }
-    
+
     saveData();
     selectDate(selectedDate); // Re-render to update UI state
     updateStats();
@@ -277,9 +289,9 @@ function updateStats() {
     Object.keys(attendanceData).forEach(date => {
         Object.keys(attendanceData[date]).forEach(subj => {
             const status = attendanceData[date][subj];
-            
+
             if (!subjectCounts[subj]) subjectCounts[subj] = { total: 0, present: 0 };
-            
+
             subjectCounts[subj].total++;
             if (status === 'P') {
                 subjectCounts[subj].present++;
@@ -299,7 +311,7 @@ function updateStats() {
     Object.keys(subjectCounts).forEach(subj => {
         const s = subjectCounts[subj];
         const sPct = Math.round((s.present / s.total) * 100);
-        
+
         const row = document.createElement('div');
         row.className = 'stat-row';
         row.innerHTML = `
