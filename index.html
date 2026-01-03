@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Student Attendance</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Setup Screen -->
+    <div id="setup-screen" class="screen">
+        <div class="setup-container">
+            <h1>Welcome 👋</h1>
+            <p>Let's set up your profile to get started.</p>
+
+            <form id="setup-form">
+                <div class="form-group">
+                    <label>IT Elective</label>
+                    <div class="radio-group">
+                        <label class="radio-card">
+                            <input type="radio" name="it_elective" value="ITDX 45" required>
+                            <span>ITDX 45 – Big Data Analytics</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="it_elective" value="ITDX 11" required>
+                            <span>ITDX 11 – Intro to DevOps</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="it_elective" value="ITDX 42" required>
+                            <span>ITDX 42 – Programming in R</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="it_elective" value="ITDX 29" required>
+                            <span>ITDX 29 – Industry 4.0 & IIoT</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>SSDX Elective</label>
+                    <div class="radio-group">
+                        <label class="radio-card">
+                            <input type="radio" name="ssdx_elective" value="SSDX 11" required>
+                            <span>SSDX 11</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="ssdx_elective" value="SSDX 12" required>
+                            <span>SSDX 12</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="ssdx_elective" value="SSDX 13" required>
+                            <span>SSDX 13</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="ssdx_elective" value="SSDX 14" required>
+                            <span>SSDX 14</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Batch</label>
+                    <div class="radio-group horizontal">
+                        <label class="radio-card">
+                            <input type="radio" name="batch" value="1" required>
+                            <span>Batch 1</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="batch" value="2" required>
+                            <span>Batch 2</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary">Get Started</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- App Screen -->
+    <div id="app-screen" class="screen hidden">
+        <header class="app-header">
+            <div class="header-top">
+                <h1 id="month-display">January</h1>
+                <button id="reset-btn" class="icon-btn" aria-label="Reset Setup">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                        <path d="M3 3v5h5"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="date-picker-wrapper">
+                <div id="date-scroll" class="date-scroll">
+                    <!-- Dates injected via JS -->
+                </div>
+            </div>
+        </header>
+
+        <main id="main-content">
+            <div id="subjects-container" class="subjects-list">
+                <!-- Subject cards injected via JS -->
+                 <div class="empty-state">Select a date to view classes</div>
+            </div>
+        </main>
+
+        <section class="stats-overview">
+            <h2>Attendance Overview</h2>
+            <div class="overall-progress">
+                <div class="circular-chart" id="overall-chart">
+                    <!-- SVG Chart -->
+                </div>
+                <div class="overall-text">
+                    <span id="overall-percentage">0%</span>
+                    <small>Total Attendance</small>
+                </div>
+            </div>
+            <div id="subject-stats-list" class="subject-stats-list">
+                <!-- Stats rows -->
+            </div>
+        </section>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(reg => console.log('SW Registered'))
+                .catch(err => console.error('SW Error', err));
+        }
+    </script>
+</body>
+</html>

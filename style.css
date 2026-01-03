@@ -1,0 +1,350 @@
+:root {
+    --primary: #2563EB;
+    --primary-dark: #1E40AF;
+    --bg: #F8FAFC;
+    --card-bg: #FFFFFF;
+    --text-main: #1E293B;
+    --text-secondary: #64748B;
+    --success: #22C55E;
+    --danger: #EF4444;
+    --border: #E2E8F0;
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background-color: var(--bg);
+    color: var(--text-main);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Screens */
+.screen {
+    width: 100%;
+    min-height: 100vh;
+    padding: 20px; 
+    transition: opacity 0.3s ease;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Setup Style */
+.setup-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding-bottom: 40px;
+}
+
+.setup-container h1 {
+    font-size: 2rem;
+    margin-bottom: 8px;
+    color: var(--primary);
+}
+
+.setup-container p {
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+}
+
+.form-group {
+    margin-bottom: 24px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+}
+
+.radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.radio-group.horizontal {
+    flex-direction: row;
+}
+
+.radio-card {
+    position: relative;
+    cursor: pointer;
+}
+
+.radio-card input {
+    position: absolute;
+    opacity: 0;
+}
+
+.radio-card span {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.radio-card input:checked + span {
+    border-color: var(--primary);
+    background-color: #EFF6FF;
+    color: var(--primary);
+    box-shadow: 0 0 0 1px var(--primary);
+}
+
+.btn-primary {
+    width: 100%;
+    padding: 16px;
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 16px;
+}
+
+/* App Header & Date Picker */
+.app-header {
+    position: sticky;
+    top: 0;
+    background: var(--bg); /* or backdrop-filter if supported */
+    z-index: 10;
+    padding-bottom: 10px;
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    margin-bottom: 10px;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 8px;
+}
+
+.date-picker-wrapper {
+    overflow: hidden;
+    margin: 0 -20px; /* Bleed to edge */
+}
+
+.date-scroll {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding: 10px 20px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none; /* Firefox */
+}
+.date-scroll::-webkit-scrollbar { display: none; }
+
+.date-card {
+    flex: 0 0 auto;
+    width: 60px;
+    height: 80px;
+    background: var(--card-bg);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    scroll-snap-align: center;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.date-card.selected {
+    background: var(--primary);
+    color: white;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.date-day {
+    font-size: 0.8rem;
+    font-weight: 500;
+    opacity: 0.8;
+}
+
+.date-num {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-top: 2px;
+}
+
+/* Main Content */
+#main-content {
+    flex: 1;
+    padding-bottom: 40px;
+}
+
+.subject-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.subject-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.subject-time {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    background: #F1F5F9;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+.subject-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 8px 0 4px;
+}
+
+.subject-type {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.attendance-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.btn-action {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: transparent;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-present {
+    color: var(--success);
+    border-color: var(--success);
+}
+
+.btn-absent {
+    color: var(--danger);
+    border-color: var(--danger);
+}
+
+/* Active States */
+.btn-present.active {
+    background: var(--success);
+    color: white;
+}
+
+.btn-absent.active {
+    background: var(--danger);
+    color: white;
+}
+
+/* Break Card */
+.break-card {
+    text-align: center;
+    padding: 16px;
+    color: var(--text-secondary);
+    font-style: italic;
+    opacity: 0.7;
+    font-size: 0.9rem;
+}
+
+/* Stats */
+.stats-overview {
+    background: var(--card-bg);
+    border-radius: 20px 20px 0 0;
+    padding: 24px 20px;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+}
+
+.overall-progress {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.circular-chart {
+    width: 60px;
+    height: 60px;
+    /* Placeholder for actual chart or simple CSS border */
+    border-radius: 50%;
+    background: conic-gradient(var(--primary) var(--pct, 0%), var(--bg) 0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.circular-chart::before {
+    content: '';
+    width: 48px;
+    height: 48px;
+    background: var(--card-bg);
+    border-radius: 50%;
+}
+
+.overall-text {
+    display: flex;
+    flex-direction: column;
+}
+
+#overall-percentage {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-main);
+}
+
+.subject-stats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--bg);
+}
+
+.stat-row span:last-child {
+    font-weight: 600;
+}
