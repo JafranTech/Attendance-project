@@ -19,8 +19,35 @@
 
 <body>
 
-    <!-- Setup Screen -->
-    <div id="setup-screen" class="screen">
+    <!-- Department Screen -->
+    <div id="department-screen" class="screen hidden">
+        <div class="setup-container">
+            <div class="logo-wrapper">
+                <img src="assets/logo-new.jpg" alt="Institute Logo" class="app-logo">
+            </div>
+            <h1>Department</h1>
+            <p>Please select your department.</p>
+
+            <form id="department-form">
+                <div class="form-group">
+                    <div class="radio-group">
+                        <label class="radio-card">
+                            <input type="radio" name="dept" value="IT" required>
+                            <span>Information Technology</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="dept" value="BIO" required>
+                            <span>Biotechnology</span>
+                        </label>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary">Next</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Setup Screen (IT) -->
+    <div id="setup-screen" class="screen hidden">
         <div class="setup-container">
             <div class="logo-wrapper">
                 <img src="assets/logo-new.jpg" alt="Institute Logo" class="app-logo">
@@ -75,6 +102,93 @@
                         <label class="radio-card">
                             <input type="radio" name="ssdx_elective" value="SSDX 14" required>
                             <span>SSDX 14 – Gender, Technology and Development</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Batch</label>
+                    <div class="radio-group horizontal">
+                        <label class="radio-card">
+                            <input type="radio" name="batch" value="1" required>
+                            <span>Batch 1</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="batch" value="2" required>
+                            <span>Batch 2</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary">Get Started</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Setup Screen (BIO) -->
+    <div id="setup-screen-bio" class="screen hidden">
+        <div class="setup-container">
+            <div class="logo-wrapper">
+                <img src="assets/logo-new.jpg" alt="Institute Logo" class="app-logo">
+            </div>
+            <h1>Setup (Biotech)</h1>
+            <p>Select your electives.</p>
+
+            <form id="setup-form-bio">
+                <div class="form-group">
+                    <label>Biotechnology Elective (PE)</label>
+                    <div class="radio-group">
+                        <label class="radio-card">
+                            <input type="radio" name="bio_elective" value="BTDX 31" required>
+                            <span>BTDX 31 – Intellectual Property Rights</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="bio_elective" value="BTDX 37" required>
+                            <span>BTDX 37 – Stem Cell Technology</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Social Science Elective (SS)</label>
+                    <div class="radio-group">
+                        <label class="radio-card">
+                            <input type="radio" name="ssdx_elective" value="SSDX 11" required>
+                            <span>SSDX 11 – Economics of Sustainable Development</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="ssdx_elective" value="SSDX 12" required>
+                            <span>SSDX 12 – Sociology of Industrial Relations</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="ssdx_elective" value="SSDX 13" required>
+                            <span>SSDX 13 – Professional Ethics and Human Values</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="ssdx_elective" value="SSDX 14" required>
+                            <span>SSDX 14 – Gender, Technology and Development</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Open Elective (GE)</label>
+                    <div class="radio-group">
+                        <label class="radio-card">
+                            <input type="radio" name="chem_elective" value="GEDX 207" required>
+                            <span>GEDX 207 – Cyber Forensics</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="chem_elective" value="GEDX 208" required>
+                            <span>GEDX 208 – Cyber Security</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="chem_elective" value="GEDX 209" required>
+                            <span>GEDX 209 – Disaster Management</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="chem_elective" value="GEDX 112" required>
+                            <span>GEDX 112 – Electric Vehicle</span>
                         </label>
                     </div>
                 </div>

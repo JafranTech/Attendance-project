@@ -236,11 +236,18 @@ body {
 .subject-name {
     font-size: 1.1rem;
     font-weight: 700;
-    margin: 8px 0 4px;
+    margin: 8px 0 2px;
+}
+
+.subject-full-name {
+    font-size: 0.95rem;
+    color: var(--text-main);
+    margin-bottom: 4px;
+    font-weight: 500;
 }
 
 .subject-type {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: var(--text-secondary);
 }
 
