@@ -178,29 +178,21 @@ const screens = {
     dept: document.getElementById('department-screen'),
     setup: document.getElementById('setup-screen'),
     setupBio: document.getElementById('setup-screen-bio'),
-    app: document.getElementById('app-screen'),
-    notes: document.getElementById('notes-screen'),
-    history: document.getElementById('history-screen')
+    app: document.getElementById('app-screen')
 };
-
-// Forms & Setup
 const deptForm = document.getElementById('department-form');
 const setupForm = document.getElementById('setup-form');
 const setupBioForm = document.getElementById('setup-form-bio');
-const resetBtn = document.getElementById('reset-btn');
-
-// Main App Navigation
 const dateScroll = document.getElementById('date-scroll');
 const subjectsContainer = document.getElementById('subjects-container');
 const monthDisplay = document.getElementById('month-display');
 const prevMonthBtn = document.getElementById('prev-month');
 const nextMonthBtn = document.getElementById('next-month');
-
-// Statistics
+const resetBtn = document.getElementById('reset-btn');
 const overallPercentage = document.getElementById('overall-percentage');
 const overallChartLine = document.querySelector('.circular-chart');
+
 const subjectStatsList = document.getElementById('subject-stats-list');
-const overallProgressSection = document.querySelector('.overall-progress');
 
 // Profile Elements
 const profileTrigger = document.getElementById('profile-trigger');
@@ -212,29 +204,6 @@ const avatarPreview = document.getElementById('avatar-preview');
 const profileNameInput = document.getElementById('profile-name');
 const saveProfileBtn = document.getElementById('save-profile-btn');
 const headerRight = document.querySelector('.header-right');
-
-// Notes Elements
-const notesTrigger = document.getElementById('notes-trigger');
-const notesSubjectSelect = document.getElementById('notes-subject-select');
-const notesArea = document.getElementById('notes-area');
-const notesStatus = document.getElementById('notes-status');
-const backFromNotesBtn = document.getElementById('back-from-notes');
-
-// History Elements
-const backFromHistoryBtn = document.getElementById('back-from-history');
-const historyList = document.getElementById('history-list');
-const filterBtns = document.querySelectorAll('.filter-btn');
-
-const NOTES_KEY = 'attendance_notes';
-let notesData = {}; // { "Subject Name": "note content" }
-
-const SATURDAY_KEY = 'attendance_saturday_map';
-let saturdayData = {}; // { "2026-05-16": 1 (Monday) }
-
-// Saturday Elements
-const saturdayModal = document.getElementById('saturday-modal');
-
-let selectedHistorySubject = null; // State for drilldown
 
 // --- Initialization ---
 function init() {
@@ -293,18 +262,11 @@ function loadData() {
 
     const profile = localStorage.getItem(PROFILE_KEY);
     if (profile) profileData = JSON.parse(profile);
-
-    const notes = localStorage.getItem(NOTES_KEY);
-    if (notes) notesData = JSON.parse(notes);
-
-    const satMap = localStorage.getItem(SATURDAY_KEY);
-    if (satMap) saturdayData = JSON.parse(satMap);
 }
 
 function saveData() {
     localStorage.setItem(DATA_KEY, JSON.stringify(attendanceData));
     localStorage.setItem(HOLIDAYS_KEY, JSON.stringify(holidaysData));
-    localStorage.setItem(SATURDAY_KEY, JSON.stringify(saturdayData));
 }
 
 // --- Navigation ---
@@ -314,8 +276,6 @@ function showDeptSelection() {
     screens.setup.classList.add('hidden');
     screens.setupBio.classList.add('hidden');
     screens.app.classList.add('hidden');
-    screens.notes.classList.add('hidden');
-    screens.history.classList.add('hidden');
 }
 
 function showSetup() {
@@ -323,8 +283,6 @@ function showSetup() {
     screens.setup.classList.remove('hidden');
     screens.setupBio.classList.add('hidden');
     screens.app.classList.add('hidden');
-    screens.notes.classList.add('hidden');
-    screens.history.classList.add('hidden');
 }
 
 function showSetupBio() {
@@ -332,32 +290,6 @@ function showSetupBio() {
     screens.setup.classList.add('hidden');
     screens.setupBio.classList.remove('hidden');
     screens.app.classList.add('hidden');
-    screens.notes.classList.add('hidden');
-    screens.history.classList.add('hidden');
-}
-
-function showNotes() {
-    screens.app.classList.add('hidden');
-    screens.notes.classList.remove('hidden');
-    populateNotesDropdown();
-}
-
-function showHistory(subject = null) {
-    selectedHistorySubject = subject;
-    screens.app.classList.add('hidden');
-    screens.history.classList.remove('hidden');
-
-    // Update Header Title
-    const headerTitle = screens.history.querySelector('h1');
-    if (subject) {
-        headerTitle.textContent = subject; // Show subject code
-        headerTitle.style.fontSize = "1.2rem";
-    } else {
-        headerTitle.textContent = "History";
-        headerTitle.style.fontSize = "";
-    }
-
-    renderHistoryList('all');
 }
 
 
@@ -411,67 +343,6 @@ resetBtn.addEventListener('click', () => {
         userConfig = null;
         location.reload();
     }
-});
-
-
-
-// Notes & History Listeners
-notesTrigger.addEventListener('click', showNotes);
-backFromNotesBtn.addEventListener('click', () => {
-    screens.notes.classList.add('hidden');
-    screens.app.classList.remove('hidden');
-});
-
-notesSubjectSelect.addEventListener('change', (e) => {
-    const subject = e.target.value;
-    if (subject) {
-        notesArea.value = notesData[subject] || '';
-    } else {
-        notesArea.value = '';
-    }
-});
-
-notesArea.addEventListener('input', () => {
-    const subject = notesSubjectSelect.value;
-    if (!subject) return;
-
-    notesData[subject] = notesArea.value;
-    localStorage.setItem(NOTES_KEY, JSON.stringify(notesData));
-
-    notesStatus.textContent = 'Saving...';
-    setTimeout(() => { notesStatus.textContent = 'Saved'; }, 800);
-});
-
-overallProgressSection.addEventListener('click', () => showHistory(null)); // Overall History
-
-backFromHistoryBtn.addEventListener('click', () => {
-    if (selectedHistorySubject) {
-        // If deep in subject history, go back to overall history? 
-        // Or just back to app? User said "Overall -> Subject -> Back -> Overall".
-        // Wait, normally Back goes to previous screen.
-        // If I am in Subject History, Back should go to App (where I clicked subject) 
-        // OR Back goes to Overall History (if accessed from there, but it's accessed from stats list in App).
-        // Let's stick to standard: Back -> App.
-        // BUT, user asked "Overall -> Subject -> Back -> Overall" implies navigation stack.
-        // Current implementation: Stats List is in App. 
-        // So clicking Subject -> Opens History. Back -> Should go to App.
-        // Clicking Overall Circle -> Opens History. Back -> Should go to App.
-        // So standard behavior is fine.
-        selectedHistorySubject = null;
-        screens.history.classList.add('hidden');
-        screens.app.classList.remove('hidden');
-    } else {
-        screens.history.classList.add('hidden');
-        screens.app.classList.remove('hidden');
-    }
-});
-
-filterBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-        filterBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        renderHistoryList(btn.dataset.filter);
-    });
 });
 
 // --- Profile Logic ---
@@ -572,9 +443,6 @@ function showApp() {
     screens.dept.classList.add('hidden');
     screens.setup.classList.add('hidden');
     screens.setupBio.classList.add('hidden');
-    screens.setupBio.classList.add('hidden');
-    screens.notes.classList.add('hidden');
-    screens.history.classList.add('hidden');
     screens.app.classList.remove('hidden');
 
     // Set initial state
@@ -682,27 +550,8 @@ function renderSubjects(dayOfWeek, dateObj) {
         return;
     }
 
-    // Saturday Logic - Check Override
-    let effectiveDay = dayOfWeek;
-    let isSaturdayWorking = false;
-    let satOverrideDay = null;
-
-    if (dayOfWeek === 6) {
-        if (saturdayData[dateKey]) {
-            effectiveDay = saturdayData[dateKey];
-            isSaturdayWorking = true;
-            satOverrideDay = effectiveDay;
-        }
-    }
-
-    if ((dayOfWeek === 0 || dayOfWeek === 6) && !isSaturdayWorking) {
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
         subjectsContainer.innerHTML = '<div class="empty-state">No classes today! 🎉</div>';
-
-        // Add "Add Class" button only for Saturday
-        if (dayOfWeek === 6) {
-            appendSaturdayControl(dateKey, null);
-        }
-
         appendHolidayButton(dateKey, false);
         return;
     }
@@ -711,21 +560,16 @@ function renderSubjects(dayOfWeek, dateObj) {
     const isBio = (userConfig.dept === 'BIO');
     const timetableSource = isBio ? BIO_TIMETABLE : TIMETABLE;
 
-    if (!timetableSource[effectiveDay]) {
+    if (!timetableSource[dayOfWeek]) {
         subjectsContainer.innerHTML = '<div class="empty-state">No classes today! 🎉</div>';
         appendHolidayButton(dateKey, false);
         return;
     }
 
-    // If Saturday is working, show control at top
-    if (isSaturdayWorking) {
-        appendSaturdayControl(dateKey, satOverrideDay);
-    }
-
-    const slots = timetableSource[effectiveDay];
+    const slots = timetableSource[dayOfWeek];
 
     if (isBio) {
-        renderSubjectsBio(effectiveDay, dateKey, slots); // Pass effectiveDay for logic but dateKey for storage
+        renderSubjectsBio(dayOfWeek, dateKey, slots);
         appendHolidayButton(dateKey, false);
         return;
     }
@@ -756,63 +600,6 @@ function renderSubjects(dayOfWeek, dateObj) {
     });
 
     appendHolidayButton(dateKey, false);
-}
-
-// Saturday UI Helpers
-function appendSaturdayControl(dateKey, currentDayIndex) {
-    const div = document.createElement('div');
-    div.className = 'saturday-control';
-
-    if (currentDayIndex) {
-        // Active State
-        const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-
-        div.innerHTML = `
-            <div class="saturday-active-info">
-                <span class="saturday-active-text">Working Day (${dayNames[currentDayIndex]} Timetable)</span>
-                <button class="btn-remove-saturday" onclick="removeSaturday('${dateKey}')">Remove</button>
-            </div>
-        `;
-        // Insert at TOP
-        subjectsContainer.prepend(div);
-    } else {
-        // Add Class State
-        div.innerHTML = `
-            <h4>Saturday Working Day?</h4>
-            <p>If classes are held today, click below to apply a weekday timetable.</p>
-            <button class="saturday-add-btn" onclick="openSaturdayModal()">
-                <span>➕</span> Add Class
-            </button>
-        `;
-        subjectsContainer.appendChild(div);
-    }
-}
-
-// Saturday Logic Functions
-window.openSaturdayModal = function () {
-    const el = document.getElementById('saturday-modal');
-    if (el) el.classList.remove('hidden');
-}
-
-window.closeSaturdayModal = function () {
-    const el = document.getElementById('saturday-modal');
-    if (el) el.classList.add('hidden');
-}
-
-window.applySaturday = function (dayIndex) {
-    const dateKey = formatDateKey(selectedDate); // Use currently selected date
-    saturdayData[dateKey] = dayIndex;
-    saveData();
-    closeSaturdayModal();
-    selectDate(selectedDate); // Re-render
-}
-
-window.removeSaturday = function (dateKey) {
-    if (confirm("Mark this Saturday as 'No Classes'?")) {
-        delete saturdayData[dateKey];
-        saveData();
-        selectDate(selectedDate);
-    }
 }
 
 // Separate function for BIO rendering logic
@@ -877,28 +664,15 @@ function createSubjectCard(time, name, type, dateKey) {
     const record = attendanceData[dateKey]?.[uniqueKey];
 
     // Lookup full subject name
+    // 'name' variable here holds the code (e.g. ITD 3201)
     const fullName = SUBJECT_NAMES[name] || "";
-
-    // Calculate Inline Progress
-    const stats = getSubjectStats(name);
-    const pct = stats.total === 0 ? 0 : Math.round((stats.present / stats.total) * 100);
-
-    let colorClass = 'progress-red';
-    if (pct >= 75) colorClass = 'progress-green';
-    else if (pct >= 70) colorClass = 'progress-yellow';
 
     card.innerHTML = `
         <div class="subject-header">
-            <div style="width: 100%;">
+            <div>
                 <span class="subject-time">${time}</span>
                 <h3 class="subject-name">${name}</h3>
                 <div class="subject-full-name">${fullName}</div>
-                
-                <div class="subject-progress-bar">
-                    <div class="progress-fill ${colorClass}" style="width: ${pct}%"></div>
-                </div>
-                <div class="progress-text">${pct}% Attendance</div>
-
                 <span class="subject-type">${type.includes('elective') ? 'Elective' : 'Core'} Subject</span>
             </div>
         </div>
@@ -909,117 +683,6 @@ function createSubjectCard(time, name, type, dateKey) {
     `;
     subjectsContainer.appendChild(card);
 }
-
-// Helper for live stats
-function getSubjectStats(subjectName) {
-    let total = 0;
-    let present = 0;
-
-    Object.keys(attendanceData).forEach(date => {
-        Object.keys(attendanceData[date]).forEach(key => {
-            const cleanName = key.includes(' [') ? key.substring(0, key.lastIndexOf(' [')) : key;
-            if (cleanName === subjectName) {
-                total++;
-                if (attendanceData[date][key] === 'P') present++;
-            }
-        });
-    });
-    return { total, present };
-}
-
-// Logic to populate Notes Dropdown
-function populateNotesDropdown() {
-    notesSubjectSelect.innerHTML = '<option value="">Select Subject...</option>';
-
-    const subjects = new Set();
-    Object.keys(attendanceData).forEach(date => {
-        Object.keys(attendanceData[date]).forEach(key => {
-            const cleanName = key.includes(' [') ? key.substring(0, key.lastIndexOf(' [')) : key;
-            subjects.add(cleanName);
-        });
-    });
-
-    // Also add current viewing day subjects if not attended yet? 
-    // Simplified: Just use subjects found in attendance data for now, 
-    // plus maybe common ones from Timetable would be better but requires scraping config.
-    // For safety, let's stick to what we know or just hardcoded known subjects?
-    // Actually, let's use the SUBJECT_NAMES keys that match the department.
-    // But that's complex to filter. Let's just use the Set from attendanceData for visited subjects.
-
-    Array.from(subjects).sort().forEach(subj => {
-        const option = document.createElement('option');
-        option.value = subj;
-        // Show Code + Name in option text, but keep Code as value
-        const fullName = SUBJECT_NAMES[subj] || "";
-        option.textContent = fullName ? `${subj} – ${fullName}` : subj;
-        notesSubjectSelect.appendChild(option);
-    });
-}
-
-// Render History
-// Render History
-function renderHistoryList(filter) {
-    historyList.innerHTML = '';
-    const entries = [];
-
-    Object.keys(attendanceData).forEach(date => {
-        Object.keys(attendanceData[date]).forEach(key => {
-            const status = attendanceData[date][key];
-            if (filter !== 'all' && status !== filter) return;
-
-            const cleanName = key.includes(' [') ? key.substring(0, key.lastIndexOf(' [')) : key;
-
-            // Subject Filter (Drilldown)
-            if (selectedHistorySubject && cleanName !== selectedHistorySubject) return;
-
-            const timeSlot = key.includes(' [') ? key.substring(key.lastIndexOf(' [') + 2, key.length - 1) : '';
-
-            entries.push({
-                date: date,
-                name: cleanName,
-                time: timeSlot,
-                status: status
-            });
-        });
-    });
-
-    // Sort by date desc
-    entries.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    if (entries.length === 0) {
-        historyList.innerHTML = '<div class="empty-state">No records found.</div>';
-        return;
-    }
-
-    entries.forEach(item => {
-        const div = document.createElement('div');
-        div.className = `history-item ${item.status === 'P' ? 'present' : 'absent'}`;
-
-        const dateStr = new Date(item.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-        const fullName = SUBJECT_NAMES[item.name] || item.name;
-
-        // Enhanced Card Design
-        div.innerHTML = `
-            <div class="history-info" style="flex: 1;">
-                <h4 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 2px;">${item.name}</h4>
-                <p style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 6px;">${fullName}</p>
-                <p style="font-size: 0.8rem; color: var(--text-secondary);">${dateStr} • ${item.time}</p>
-            </div>
-            <div style="
-                font-weight: 700; 
-                padding: 6px 12px; 
-                border-radius: 8px; 
-                background: ${item.status === 'P' ? 'white' : 'white'}; 
-                color: ${item.status === 'P' ? 'var(--success)' : 'var(--danger)'};
-                box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                ${item.status === 'P' ? 'Present' : 'Absent'}
-            </div>
-        `;
-        historyList.appendChild(div);
-    });
-}
-
-
 
 // --- Mark Attendance ---
 window.mark = function (dateKey, storageKey, status) {
@@ -1070,35 +733,6 @@ function updateStats() {
     overallPercentage.textContent = `${pct}%`;
     overallChartLine.style.setProperty('--pct', `${pct}%`);
 
-    // Add Horizontal Bar if it doesn't exist or update it
-    let overallBar = document.getElementById('overall-bar-fill');
-    if (!overallBar) {
-        // Create the container if missing (one-time injection basically)
-        const container = document.createElement('div');
-        container.className = 'overall-bar-container';
-        container.innerHTML = `<div id="overall-bar-fill" class="overall-bar-fill" style="width: 0%"></div>`;
-
-        // Append to overview text or parent
-        const overviewParent = document.querySelector('.overall-progress');
-        if (overviewParent && !overviewParent.querySelector('.overall-bar-container')) {
-            // We want it BELOW the circle, so maybe outside overall-progress flex?
-            // User asked: "add a horizontal progress bar below it".
-            // Let's look at HTML structure... .overall-progress is flex row.
-            // We should probably append it to .stats-overview, after .overall-progress.
-            // But stats-overview has many children.
-            // Let's enable dynamic insertion.
-            const statsOverview = document.querySelector('.stats-overview');
-            // Insert after overall-progress
-            statsOverview.insertBefore(container, document.getElementById('subject-stats-list'));
-            overallBar = container.querySelector('#overall-bar-fill');
-        }
-    }
-
-    if (overallBar) {
-        overallBar.style.width = `${pct}%`;
-        overallBar.style.backgroundColor = pct >= 75 ? 'var(--success)' : (pct >= 70 ? '#F59E0B' : 'var(--danger)');
-    }
-
     // Per Subject
     subjectStatsList.innerHTML = '';
     Object.keys(subjectCounts).forEach(subj => {
@@ -1107,19 +741,9 @@ function updateStats() {
 
         const row = document.createElement('div');
         row.className = 'stat-row';
-        // Make row clickable for drilldown
-        row.onclick = () => showHistory(subj);
-        row.style.cursor = 'pointer';
-
-        // Lookup full subject name
-        const fullName = SUBJECT_NAMES[subj] || "";
-
         row.innerHTML = `
-            <div style="display: flex; flex-direction: column; gap: 2px;">
-                 <span style="font-weight: 700; font-size: 1rem;">${subj}</span>
-                 <span style="font-size: 0.8rem; color: var(--text-secondary); opacity: 0.8;">${fullName}</span>
-            </div>
-            <span style="color: ${sPct < 75 ? 'var(--danger)' : 'var(--success)'}; font-weight: 700;">${sPct}%</span>
+            <span>${subj}</span>
+            <span style="color: ${sPct < 75 ? 'var(--danger)' : 'var(--success)'}">${sPct}% (${s.present}/${s.total})</span>
         `;
         subjectStatsList.appendChild(row);
     });

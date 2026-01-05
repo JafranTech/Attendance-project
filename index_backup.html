@@ -212,7 +212,7 @@
         </div>
     </div>
 
-
+    
 
     <!-- App Screen -->
     <div id="app-screen" class="screen hidden">
@@ -228,13 +228,6 @@
                             stroke-width="2">
                             <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
                             <path d="M3 3v5h5" />
-                        </svg>
-                    </button>
-                    <button id="notes-trigger" class="icon-btn" aria-label="Notes">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                         </svg>
                     </button>
                     <button id="profile-trigger" class="profile-trigger">
@@ -272,60 +265,6 @@
                 <!-- Stats rows -->
             </div>
         </section>
-    </div>
-
-    <!-- Detailed History Screen -->
-    <div id="history-screen" class="screen hidden">
-        <header class="app-header">
-            <div class="header-top">
-                <button id="back-from-history" class="icon-btn">◀ Back</button>
-                <h1>History</h1>
-                <div style="width: 40px;"></div> <!-- Spacer -->
-            </div>
-            <div class="filter-bar">
-                <button class="filter-btn active" data-filter="all">All</button>
-                <button class="filter-btn" data-filter="P">Present</button>
-                <button class="filter-btn" data-filter="A">Absent</button>
-            </div>
-        </header>
-        <main class="history-list" id="history-list">
-            <!-- Injected via JS -->
-        </main>
-    </div>
-
-    <!-- Notes Screen -->
-    <div id="notes-screen" class="screen hidden">
-        <header class="app-header">
-            <div class="header-top">
-                <button id="back-from-notes" class="icon-btn">◀ Back</button>
-                <h1>Notes</h1>
-                <div style="width: 40px;"></div>
-            </div>
-        </header>
-        <main class="notes-container">
-            <select id="notes-subject-select" class="drawer-input">
-                <option value="">Select Subject...</option>
-                <!-- Filled via JS -->
-            </select>
-            <textarea id="notes-area" class="notes-area" placeholder="Write your notes here..."></textarea>
-            <div id="notes-status" class="notes-status">Saved</div>
-        </main>
-    </div>
-
-    <!-- Saturday Selection Modal -->
-    <div id="saturday-modal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h3>Select Timetable for Saturday</h3>
-            <p>Choose a weekday timetable to apply for this date:</p>
-            <div class="day-options">
-                <button class="day-btn" onclick="applySaturday(1)">Monday</button>
-                <button class="day-btn" onclick="applySaturday(2)">Tuesday</button>
-                <button class="day-btn" onclick="applySaturday(3)">Wednesday</button>
-                <button class="day-btn" onclick="applySaturday(4)">Thursday</button>
-                <button class="day-btn" onclick="applySaturday(5)">Friday</button>
-            </div>
-            <button class="btn-secondary" onclick="closeSaturdayModal()">Cancel</button>
-        </div>
     </div>
 
     <!-- Profile Drawer -->
