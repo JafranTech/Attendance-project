@@ -22,9 +22,9 @@ const TIMETABLE = {
         { time: "11:50 - 12:40", type: "elective_it", group: ["ITDX 42", "ITDX 29"] },
         { time: "12:40 - 01:40", type: "break", name: "Lunch Break" },
         // Split 3 periods
-        { time: "01:40 - 02:30", type: "batch", batch1: "MSD 3181", batch2: "ITD 3203 (Lab)" },
-        { time: "02:30 - 03:20", type: "batch", batch1: "MSD 3181", batch2: "ITD 3203 (Lab)" },
-        { time: "03:20 - 04:10", type: "batch", batch1: "MSD 3181", batch2: "ITD 3203 (Lab)" }
+        { time: "01:40 - 02:30", type: "batch", batch1: "ITD 3203 (Lab)", batch2: "MSD 3181" },
+        { time: "02:30 - 03:20", type: "batch", batch1: "ITD 3203 (Lab)", batch2: "MSD 3181" },
+        { time: "03:20 - 04:10", type: "batch", batch1: "ITD 3203 (Lab)", batch2: "MSD 3181" }
     ],
     2: [ // Tuesday
         { time: "09:00 - 09:50", type: "elective_it", group: ["ITDX 45", "ITDX 11"] },
@@ -41,10 +41,10 @@ const TIMETABLE = {
     3: [ // Wednesday
         { time: "09:00 - 09:50", type: "elective_it", group: ["ITDX 42", "ITDX 29"] },
         // Split 3 periods (1 morning + 2 late morning)
-        { time: "09:50 - 10:40", type: "batch", batch1: "ITD 3203 (Lab)", batch2: "MSD 3181" },
+        { time: "09:50 - 10:40", type: "batch", batch1: "MSD 3181", batch2: "ITD 3203" },
         { time: "10:40 - 11:00", type: "break", name: "Tea Break" },
-        { time: "11:00 - 11:50", type: "batch", batch1: "ITD 3203 (Lab)", batch2: "MSD 3181" },
-        { time: "11:50 - 12:40", type: "batch", batch1: "ITD 3203 (Lab)", batch2: "MSD 3181" },
+        { time: "11:00 - 11:50", type: "batch", batch1: "MSD 3181", batch2: "ITD 3203" },
+        { time: "11:50 - 12:40", type: "batch", batch1: "MSD 3181", batch2: "ITD 3203" },
         { time: "12:40 - 01:40", type: "break", name: "Lunch Break" },
         { time: "01:40 - 02:30", type: "elective_it", group: ["ITDX 45", "ITDX 11"] },
         { time: "02:30 - 03:20", type: "fixed", name: "ITD 3201" },
@@ -54,7 +54,8 @@ const TIMETABLE = {
         { time: "09:00 - 09:50", type: "elective_ssdx" },
         { time: "09:50 - 10:40", type: "elective_it", group: ["ITDX 45", "ITDX 11"] },
         { time: "10:40 - 11:00", type: "break", name: "Tea Break" },
-        { time: "11:00 - 12:40", type: "elective_it", group: ["ITDX 42", "ITDX 29"] },
+        { time: "11:00 - 11:50", type: "elective_it", group: ["ITDX 42", "ITDX 29"] },
+        { time: "11:50 - 12:40", type: "elective_it", group: ["ITDX 42", "ITDX 29"] },
         { time: "12:40 - 01:40", type: "break", name: "Lunch Break" },
         // Split 2 periods
         { time: "01:40 - 02:30", type: "fixed", name: "GEDX 209" },
