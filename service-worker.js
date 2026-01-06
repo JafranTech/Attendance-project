@@ -1,4 +1,4 @@
-const CACHE_NAME = 'attend-app-v2';
+const CACHE_NAME = 'attend-app-v4';
 const ASSETS = [
     './',
     './index.html',

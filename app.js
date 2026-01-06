@@ -7,6 +7,7 @@ const CONFIG_KEY = 'attendance_config';
 const DATA_KEY = 'attendance_data';
 const HOLIDAYS_KEY = 'attendance_holidays';
 const PROFILE_KEY = 'attendance_profile';
+const THEME_KEY = 'attendance_theme';
 const ACADEMIC_START = new Date('2026-01-05T00:00:00');
 const ACADEMIC_END = new Date('2026-07-31T23:59:59');
 
@@ -212,6 +213,7 @@ const avatarPreview = document.getElementById('avatar-preview');
 const profileNameInput = document.getElementById('profile-name');
 const saveProfileBtn = document.getElementById('save-profile-btn');
 const headerRight = document.querySelector('.header-right');
+const themeToggle = document.getElementById('theme-toggle');
 
 // Notes Elements
 const notesTrigger = document.getElementById('notes-trigger');
@@ -239,6 +241,7 @@ let selectedHistorySubject = null; // State for drilldown
 // --- Initialization ---
 function init() {
     loadData();
+    loadTheme();
     // Always render profile UI regardless of config state
     renderProfileUI();
 
@@ -307,6 +310,29 @@ function saveData() {
     localStorage.setItem(SATURDAY_KEY, JSON.stringify(saturdayData));
 }
 
+// --- Theme Logic ---
+function loadTheme() {
+    const theme = localStorage.getItem(THEME_KEY);
+    if (theme === 'dark') {
+        document.body.classList.add('dark-mode');
+        themeToggle.textContent = '☀️';
+    } else {
+        document.body.classList.remove('dark-mode');
+        themeToggle.textContent = '🌙';
+    }
+}
+
+themeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+
+    // Update Icon
+    themeToggle.textContent = isDark ? '☀️' : '🌙';
+
+    // Save Persistence
+    localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
+});
+
 // --- Navigation ---
 // --- Navigation ---
 function showDeptSelection() {
@@ -350,10 +376,18 @@ function showHistory(subject = null) {
     // Update Header Title
     const headerTitle = screens.history.querySelector('h1');
     if (subject) {
-        headerTitle.textContent = subject; // Show subject code
-        headerTitle.style.fontSize = "1.2rem";
+        // Look up full name
+        const fullName = SUBJECT_NAMES[subject] || "";
+        // If name exists, show Code (Name). Else just Code.
+        // Actually user wants: "Attendance History – ITD 3201 (Software Testing)"
+        // But the h1 is usually "History" or subject code in previous step.
+        // Let's make it concise: Code (below name in list anyway).
+        // User requested: "Attendance History – ITD 3201 (Software Testing)"
+        // That might be too long for mobile header. 
+        // Let's try:
+        headerTitle.innerHTML = `<span style="display:block; font-size: 1.1rem; font-weight: 700;">${subject}</span><span style="display:block; font-size: 0.8rem; font-weight: 400; opacity: 0.8;">${fullName}</span>`;
     } else {
-        headerTitle.textContent = "History";
+        headerTitle.textContent = "Attendance History";
         headerTitle.style.fontSize = "";
     }
 
@@ -859,6 +893,9 @@ function toggleHoliday(dateKey) {
     selectDate(selectedDate);
 }
 
+// Helper for live stats (needs to return clean numbers)
+// Note: We already have a getSubjectStats function nearby.
+
 function createSubjectCard(time, name, type, dateKey) {
     if (type === 'break') {
         const div = document.createElement('div');
@@ -872,7 +909,6 @@ function createSubjectCard(time, name, type, dateKey) {
     card.className = 'subject-card';
 
     // Generate unique ID for storage (Name + Time)
-    // We replace spaces/special chars in time to make a clean key suffix
     const uniqueKey = `${name} [${time}]`;
     const record = attendanceData[dateKey]?.[uniqueKey];
 
@@ -888,7 +924,7 @@ function createSubjectCard(time, name, type, dateKey) {
     else if (pct >= 70) colorClass = 'progress-yellow';
 
     card.innerHTML = `
-        <div class="subject-header">
+        <div class="subject-header" onclick="showHistory('${name}')" style="cursor: pointer;">
             <div style="width: 100%;">
                 <span class="subject-time">${time}</span>
                 <h3 class="subject-name">${name}</h3>
@@ -897,7 +933,7 @@ function createSubjectCard(time, name, type, dateKey) {
                 <div class="subject-progress-bar">
                     <div class="progress-fill ${colorClass}" style="width: ${pct}%"></div>
                 </div>
-                <div class="progress-text">${pct}% Attendance</div>
+                <div class="progress-text" style="font-weight: 700; font-size: 0.9rem;">${pct}% (${stats.present}/${stats.total}) Attendance</div>
 
                 <span class="subject-type">${type.includes('elective') ? 'Elective' : 'Core'} Subject</span>
             </div>
@@ -963,6 +999,9 @@ function renderHistoryList(filter) {
     const entries = [];
 
     Object.keys(attendanceData).forEach(date => {
+        // Enforce Academic Start Date Check
+        if (new Date(date) < ACADEMIC_START) return;
+
         Object.keys(attendanceData[date]).forEach(key => {
             const status = attendanceData[date][key];
             if (filter !== 'all' && status !== filter) return;
@@ -983,8 +1022,8 @@ function renderHistoryList(filter) {
         });
     });
 
-    // Sort by date desc
-    entries.sort((a, b) => new Date(b.date) - new Date(a.date));
+    // Sort by date desc (Robust comparison)
+    entries.sort((a, b) => b.date.localeCompare(a.date));
 
     if (entries.length === 0) {
         historyList.innerHTML = '<div class="empty-state">No records found.</div>';
@@ -995,7 +1034,11 @@ function renderHistoryList(filter) {
         const div = document.createElement('div');
         div.className = `history-item ${item.status === 'P' ? 'present' : 'absent'}`;
 
-        const dateStr = new Date(item.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+        // Fix Date Display (avoid timezone shift)
+        // Parse YYYY-MM-DD -> Date object in local time
+        const [y, m, d] = item.date.split('-').map(Number);
+        const localDate = new Date(y, m - 1, d); // Local midnight
+        const dateStr = localDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
         const fullName = SUBJECT_NAMES[item.name] || item.name;
 
         // Enhanced Card Design
@@ -1008,10 +1051,12 @@ function renderHistoryList(filter) {
             <div style="
                 font-weight: 700; 
                 padding: 6px 12px; 
-                border-radius: 8px; 
-                background: ${item.status === 'P' ? 'white' : 'white'}; 
+                border-radius: 20px; 
+                background: ${item.status === 'P' ? '#ECFDF5' : '#FEF2F2'}; 
                 color: ${item.status === 'P' ? 'var(--success)' : 'var(--danger)'};
-                box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                border: 1px solid ${item.status === 'P' ? '#A7F3D0' : '#FECACA'};
+                box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+                font-size: 0.85rem;">
                 ${item.status === 'P' ? 'Present' : 'Absent'}
             </div>
         `;
@@ -1037,7 +1082,10 @@ window.mark = function (dateKey, storageKey, status) {
 };
 
 function formatDateKey(date) {
-    return date.toISOString().split('T')[0];
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
 }
 
 // --- Stats Logic ---
@@ -1119,7 +1167,7 @@ function updateStats() {
                  <span style="font-weight: 700; font-size: 1rem;">${subj}</span>
                  <span style="font-size: 0.8rem; color: var(--text-secondary); opacity: 0.8;">${fullName}</span>
             </div>
-            <span style="color: ${sPct < 75 ? 'var(--danger)' : 'var(--success)'}; font-weight: 700;">${sPct}%</span>
+            <span style="color: ${sPct < 75 ? 'var(--danger)' : 'var(--success)'}; font-weight: 700;">${sPct}% (${s.present}/${s.total})</span>
         `;
         subjectStatsList.appendChild(row);
     });
