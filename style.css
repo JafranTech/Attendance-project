@@ -845,3 +845,54 @@ body {
     color: var(--text-secondary);
     height: 20px;
 }
+
+/* Bulk Action Bar */
+.bulk-actions-bar {
+    display: flex;
+    gap: 15px;
+    padding: 5px 5px 20px 5px;
+    justify-content: center;
+    width: 100%;
+}
+
+.btn-bulk-action {
+    flex: 1;
+    max-width: 180px;
+    padding: 12px 0;
+    border: none;
+    border-radius: 50px;
+    /* Pill shape */
+    color: white;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.1s, box-shadow 0.1s;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-bulk-action:active {
+    transform: scale(0.97);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-present-all {
+    background: linear-gradient(135deg, #22C55E 0%, #4ADE80 100%);
+}
+
+.btn-absent-all {
+    background: linear-gradient(135deg, #EF4444 0%, #F87171 100%);
+}
+
+/* Dark mode contrast */
+body.dark-mode .btn-present-all {
+    box-shadow: 0 4px 6px rgba(34, 197, 94, 0.1);
+}
+
+body.dark-mode .btn-absent-all {
+    box-shadow: 0 4px 6px rgba(239, 68, 68, 0.1);
+}

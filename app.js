@@ -764,6 +764,8 @@ function renderSubjects(dayOfWeek, dateObj) {
         return;
     }
 
+    renderBulkActionBar(dateKey, slots);
+
     slots.forEach(slot => {
         // Logic to determine if we show this slot
         let subjectName = null;
@@ -851,6 +853,8 @@ window.removeSaturday = function (dateKey) {
 
 // Separate function for BIO rendering logic
 function renderSubjectsBio(dayOfWeek, dateKey, slots) {
+    renderBulkActionBar(dateKey, slots);
+
     slots.forEach(slot => {
         let subjectName = null;
 
@@ -1175,3 +1179,77 @@ function updateStats() {
 
 // Start
 init();
+// --- Bulk Action Logic ---
+function renderBulkActionBar(dateKey, slots) {
+    const hasClasses = slots.some(slot => {
+        if (slot.type === 'break') return false;
+        return !!getResolvedSubjectName(slot, userConfig);
+    });
+
+    if (!hasClasses) return;
+
+    const div = document.createElement('div');
+    div.className = 'bulk-actions-bar';
+    div.innerHTML = `
+        <button class="btn-bulk-action btn-present-all" onclick="markAll('${dateKey}', 'P')">
+            ✅ Present All
+        </button>
+        <button class="btn-bulk-action btn-absent-all" onclick="markAll('${dateKey}', 'A')">
+            ❌ Absent All
+        </button>
+    `;
+    subjectsContainer.appendChild(div);
+}
+
+function getResolvedSubjectName(slot, config) {
+    if (slot.type === 'break') return slot.name;
+    if (slot.type === 'fixed') return slot.name;
+
+    // IT Logic
+    if (slot.type === 'elective_it') {
+        if (slot.group && config.it_elective_a && slot.group.includes(config.it_elective_a)) return config.it_elective_a;
+        if (slot.group && config.it_elective_b && slot.group.includes(config.it_elective_b)) return config.it_elective_b;
+        // Fallback or legacy check
+        if (slot.group && slot.group.includes(config.it_elective)) return config.it_elective;
+        return null;
+    }
+    if (slot.type === 'elective_ssdx') return config.ssdx_elective;
+    if (slot.type === 'batch') return (config.batch === "1") ? slot.batch1 : slot.batch2;
+
+    // Bio Logic
+    if (slot.type === 'elective_bio') return config.bio_elective;
+    if (slot.type === 'elective_open') return config.chem_elective;
+
+    return null;
+}
+
+window.markAll = function (dateKey, status) {
+    const action = status === 'P' ? 'Present' : 'Absent';
+    if (!confirm(`Mark ALL classes for this date as ${action}?`)) return;
+
+    const dayOfWeek = selectedDate.getDay();
+    let effectiveDay = dayOfWeek;
+    if (dayOfWeek === 6 && saturdayData[dateKey]) {
+        effectiveDay = saturdayData[dateKey];
+    }
+
+    const isBio = (userConfig.dept === 'BIO');
+    const timetableSource = isBio ? BIO_TIMETABLE : TIMETABLE;
+    const slots = timetableSource[effectiveDay];
+
+    if (!slots) return;
+    if (!attendanceData[dateKey]) attendanceData[dateKey] = {};
+
+    slots.forEach(slot => {
+        if (slot.type === 'break') return;
+        const name = getResolvedSubjectName(slot, userConfig);
+        if (name) {
+            const uniqueKey = `${name} [${slot.time}]`;
+            attendanceData[dateKey][uniqueKey] = status;
+        }
+    });
+
+    saveData();
+    selectDate(selectedDate);
+    updateStats();
+};
