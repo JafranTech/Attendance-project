@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Login – Student Attendance</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/jpeg" href="assets/logo-new.jpg">
+    <link rel="apple-touch-icon" href="assets/logo-new.jpg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ── Auth-page-only styles (no style.css changes) ── */
+        .auth-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 20px;
+            background-color: var(--bg);
+            transition: background-color 0.3s ease;
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 420px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 36px 28px;
+            box-shadow: 0 10px 40px rgba(37, 99, 235, 0.10), 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--border);
+            animation: cardIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes cardIn {
+            from {
+                opacity: 0;
+                transform: translateY(18px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .auth-logo {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .auth-logo img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.10);
+        }
+
+        .auth-title {
+            font-size: 1.65rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 6px;
+        }
+
+        .auth-subtitle {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .auth-field {
+            margin-bottom: 18px;
+        }
+
+        .auth-field label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        .auth-field input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            outline: none;
+        }
+
+        .auth-field input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+
+        .auth-field input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        .btn-auth {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: 'Inter', system-ui, sans-serif;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.30);
+        }
+
+        .btn-auth:hover {
+            background-color: var(--primary-dark);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.38);
+        }
+
+        .btn-auth:active {
+            transform: scale(0.98);
+        }
+
+        .btn-auth:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 22px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .auth-switch a {
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .auth-switch a:hover {
+            text-decoration: underline;
+        }
+
+        .auth-error {
+            background: #FEF2F2;
+            border: 1px solid #FECACA;
+            color: #DC2626;
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .auth-error.visible {
+            display: block;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-4px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Dark mode adjustments */
+        body.dark-mode .auth-card {
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        body.dark-mode .auth-error {
+            background: rgba(239, 68, 68, 0.12);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        body.dark-mode .radio-card input:checked+span {
+            background-color: rgba(37, 99, 235, 0.15);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="auth-wrapper">
+        <div class="auth-card">
+
+            <div class="auth-logo">
+                <img src="assets/logo-new.jpg" alt="App Logo">
+            </div>
+
+            <h1 class="auth-title">Welcome Back 👋</h1>
+            <p class="auth-subtitle">Sign in to your attendance account</p>
+
+            <div id="login-error" class="auth-error" role="alert"></div>
+
+            <form id="login-form" novalidate>
+                <div class="auth-field">
+                    <label for="login-email">Email Address</label>
+                    <input type="email" id="login-email" name="email" placeholder="you@example.com" autocomplete="email"
+                        required>
+                </div>
+
+                <div class="auth-field">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" name="password" placeholder="Enter your password"
+                        autocomplete="current-password" required>
+                </div>
+
+                <button type="submit" class="btn-auth" id="login-btn">Sign In</button>
+            </form>
+
+            <p class="auth-switch">
+                Don't have an account? <a href="register.html">Create one →</a>
+            </p>
+
+        </div>
+    </div>
+
+    <script>
+        // ── Apply saved theme immediately to prevent flash ────────────────────
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+        }
+
+        // ── Redirect if already logged in ─────────────────────────────────────
+        if (localStorage.getItem('token')) {
+            window.location.replace('index.html');
+        }
+
+        // ── Login form logic ─────────────────────────────────────────────────
+        const form = document.getElementById('login-form');
+        const errBox = document.getElementById('login-error');
+        const btn = document.getElementById('login-btn');
+
+        function showError(msg) {
+            errBox.textContent = msg;
+            errBox.classList.add('visible');
+        }
+
+        function hideError() {
+            errBox.classList.remove('visible');
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError();
+
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+
+            if (!email || !password) {
+                showError('Please enter your email and password.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Signing in…';
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password }),
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showError(data.error || 'Login failed. Please try again.');
+                    return;
+                }
+
+                // Store token and user info
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+
+                // Redirect to main app
+                window.location.replace('index.html');
+
+            } catch (err) {
+                showError('Network error. Please check your connection.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Sign In';
+            }
+        });
+    </script>
+
+</body>
+
+</html>

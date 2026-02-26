@@ -1,0 +1,31 @@
+{
+    "version": 2,
+    "functions": {
+        "api/register.js": {
+            "memory": 128,
+            "maxDuration": 10
+        },
+        "api/login.js": {
+            "memory": 128,
+            "maxDuration": 10
+        },
+        "api/attendance.js": {
+            "memory": 128,
+            "maxDuration": 10
+        },
+        "api/create-order.js": {
+            "memory": 128,
+            "maxDuration": 10
+        },
+        "api/webhook.js": {
+            "memory": 128,
+            "maxDuration": 15
+        }
+    },
+    "routes": [
+        {
+            "src": "/api/(.*)",
+            "dest": "/api/$1"
+        }
+    ]
+}

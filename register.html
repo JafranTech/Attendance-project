@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Register – Student Attendance</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/jpeg" href="assets/logo-new.jpg">
+    <link rel="apple-touch-icon" href="assets/logo-new.jpg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ── Auth-page-only styles ── */
+        .auth-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 20px;
+            background-color: var(--bg);
+            transition: background-color 0.3s ease;
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 420px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 36px 28px;
+            box-shadow: 0 10px 40px rgba(37, 99, 235, 0.10), 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--border);
+            animation: cardIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes cardIn {
+            from {
+                opacity: 0;
+                transform: translateY(18px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .auth-logo {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .auth-logo img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.10);
+        }
+
+        .auth-title {
+            font-size: 1.65rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 6px;
+        }
+
+        .auth-subtitle {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .trial-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: #EFF6FF;
+            border: 1px solid #BFDBFE;
+            color: var(--primary);
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 8px 14px;
+            border-radius: 20px;
+            margin-bottom: 22px;
+            text-align: center;
+        }
+
+        .auth-field {
+            margin-bottom: 18px;
+        }
+
+        .auth-field label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        .auth-field input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            outline: none;
+        }
+
+        .auth-field input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+
+        .auth-field input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        .btn-auth {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: 'Inter', system-ui, sans-serif;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.30);
+        }
+
+        .btn-auth:hover {
+            background-color: var(--primary-dark);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.38);
+        }
+
+        .btn-auth:active {
+            transform: scale(0.98);
+        }
+
+        .btn-auth:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 22px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .auth-switch a {
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .auth-switch a:hover {
+            text-decoration: underline;
+        }
+
+        .auth-error {
+            background: #FEF2F2;
+            border: 1px solid #FECACA;
+            color: #DC2626;
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .auth-error.visible {
+            display: block;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .auth-success {
+            background: #ECFDF5;
+            border: 1px solid #A7F3D0;
+            color: #065F46;
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .auth-success.visible {
+            display: block;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-4px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Dark mode */
+        body.dark-mode .auth-card {
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        body.dark-mode .trial-badge {
+            background: rgba(37, 99, 235, 0.12);
+            border-color: rgba(37, 99, 235, 0.25);
+        }
+
+        body.dark-mode .auth-error {
+            background: rgba(239, 68, 68, 0.12);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        body.dark-mode .auth-success {
+            background: rgba(34, 197, 94, 0.12);
+            border-color: rgba(34, 197, 94, 0.3);
+            color: #4ADE80;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="auth-wrapper">
+        <div class="auth-card">
+
+            <div class="auth-logo">
+                <img src="assets/logo-new.jpg" alt="App Logo">
+            </div>
+
+            <h1 class="auth-title">Create Account</h1>
+            <p class="auth-subtitle">Track your attendance, stay on top</p>
+
+            <div class="trial-badge">
+                🎉 Free 2-day trial — no payment needed to start
+            </div>
+
+            <div id="reg-error" class="auth-error" role="alert"></div>
+            <div id="reg-success" class="auth-success" role="status"></div>
+
+            <form id="register-form" novalidate>
+                <div class="auth-field">
+                    <label for="reg-name">Full Name</label>
+                    <input type="text" id="reg-name" name="name" placeholder="e.g. Rahul Sharma" autocomplete="name"
+                        required>
+                </div>
+
+                <div class="auth-field">
+                    <label for="reg-email">Email Address</label>
+                    <input type="email" id="reg-email" name="email" placeholder="you@example.com" autocomplete="email"
+                        required>
+                </div>
+
+                <div class="auth-field">
+                    <label for="reg-password">Password</label>
+                    <input type="password" id="reg-password" name="password" placeholder="Minimum 6 characters"
+                        autocomplete="new-password" required minlength="6">
+                </div>
+
+                <button type="submit" class="btn-auth" id="reg-btn">Create Account</button>
+            </form>
+
+            <p class="auth-switch">
+                Already have an account? <a href="login.html">Sign in →</a>
+            </p>
+
+        </div>
+    </div>
+
+    <script>
+        // ── Apply saved theme ─────────────────────────────────────────────────
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+        }
+
+        // ── Redirect if already logged in ─────────────────────────────────────
+        if (localStorage.getItem('token')) {
+            window.location.replace('index.html');
+        }
+
+        const form = document.getElementById('register-form');
+        const errBox = document.getElementById('reg-error');
+        const successBox = document.getElementById('reg-success');
+        const btn = document.getElementById('reg-btn');
+
+        function showError(msg) {
+            errBox.textContent = msg;
+            errBox.classList.add('visible');
+            successBox.classList.remove('visible');
+        }
+
+        function showSuccess(msg) {
+            successBox.textContent = msg;
+            successBox.classList.add('visible');
+            errBox.classList.remove('visible');
+        }
+
+        function hideMessages() {
+            errBox.classList.remove('visible');
+            successBox.classList.remove('visible');
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideMessages();
+
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const password = document.getElementById('reg-password').value;
+
+            if (!name || !email || !password) {
+                showError('All fields are required.');
+                return;
+            }
+
+            if (password.length < 6) {
+                showError('Password must be at least 6 characters.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Creating account…';
+
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password }),
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showError(data.error || 'Registration failed. Please try again.');
+                    return;
+                }
+
+                showSuccess('Account created! Redirecting to login…');
+                setTimeout(() => window.location.replace('login.html'), 1500);
+
+            } catch (err) {
+                showError('Network error. Please check your connection.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Create Account';
+            }
+        });
+    </script>
+
+</body>
+
+</html>

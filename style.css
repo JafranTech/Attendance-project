@@ -896,3 +896,20 @@ body.dark-mode .btn-present-all {
 body.dark-mode .btn-absent-all {
     box-shadow: 0 4px 6px rgba(239, 68, 68, 0.1);
 }
+
+/* ── Logout Button ─────────────────────────────────────────────────────────── */
+.logout-btn {
+    color: var(--text-secondary);
+    transition: color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logout-btn:hover {
+    color: var(--danger);
+}
+
+.logout-btn:active {
+    transform: scale(0.92);
+}

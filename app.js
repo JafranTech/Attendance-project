@@ -2,6 +2,14 @@
  * Student Attendance PWA Logic
  */
 
+// ── Auth Guard ───────────────────────────────────────────────────────────────
+// Redirect to login if no JWT token is stored
+(function checkAuth() {
+    if (!localStorage.getItem('token')) {
+        window.location.replace('login.html');
+    }
+})();
+
 // --- Constants & Config ---
 const CONFIG_KEY = 'attendance_config';
 const DATA_KEY = 'attendance_data';
@@ -244,6 +252,25 @@ function init() {
     loadTheme();
     // Always render profile UI regardless of config state
     renderProfileUI();
+
+    // ── Inject logout button into header ──────────────────────────────────
+    if (headerRight && !document.getElementById('logout-btn')) {
+        const logoutBtn = document.createElement('button');
+        logoutBtn.id = 'logout-btn';
+        logoutBtn.className = 'icon-btn logout-btn';
+        logoutBtn.setAttribute('aria-label', 'Logout');
+        logoutBtn.title = 'Logout';
+        logoutBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`;
+        logoutBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to log out?')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.replace('login.html');
+            }
+        });
+        // Insert before the first child so it's leftmost in header-right
+        headerRight.insertBefore(logoutBtn, headerRight.firstChild);
+    }
 
     if (userConfig) {
         showApp();
