@@ -13,6 +13,10 @@ module.exports = async function handler(req, res) {
             return res.status(400).json({ error: 'name, email, and password are required' });
         }
 
+        if (password.length < 6) {
+            return res.status(400).json({ error: 'Password must be at least 6 characters' });
+        }
+
         const supabase = getClient();
 
         // ── Duplicate email check ─────────────────────────────────────────────
@@ -35,35 +39,20 @@ module.exports = async function handler(req, res) {
         const password_hash = await bcrypt.hash(password, 12);
 
         // ── Create user ───────────────────────────────────────────────────────
-        const { data: user, error: userError } = await supabase
+        const { error: userError } = await supabase
             .from('users')
-            .insert({ name, email, password_hash })
-            .select('id')
-            .single();
+            .insert({ name, email, password_hash });
 
         if (userError) {
             console.error('[register] User insert error:', userError);
             return res.status(500).json({ error: 'Failed to create user', detail: userError.message });
         }
 
-        // ── Create 2-day free trial subscription ──────────────────────────────
-        const trialExpiry = new Date();
-        trialExpiry.setDate(trialExpiry.getDate() + 2);
-
-        const { error: subError } = await supabase
-            .from('subscriptions')
-            .insert({
-                user_id: user.id,
-                plan: 'trial',
-                expiry_date: trialExpiry.toISOString(),
-            });
-
-        if (subError) {
-            console.error('[register] Subscription insert error:', subError);
-            return res.status(500).json({ error: 'Failed to create trial subscription', detail: subError.message });
-        }
-
-        return res.status(201).json({ message: 'Registration successful. 2-day free trial activated.' });
+        // NOTE: Trial subscription is NOT created here.
+        // It is created on the user's FIRST successful login.
+        return res.status(201).json({
+            message: 'Registration successful. Login to start your 24-hour free trial.'
+        });
 
     } catch (err) {
         console.error('[register] Unhandled error:', err.message, err.stack);

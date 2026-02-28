@@ -10,36 +10,12 @@ module.exports = async function handler(req, res) {
         const user_id = req.user_id;
         const supabase = getClient();
 
-        // ── Subscription expiry check ─────────────────────────────────────────
-        const { data: subscription, error: subError } = await supabase
-            .from('subscriptions')
-            .select('expiry_date, plan')
-            .eq('user_id', user_id)
-            .order('expiry_date', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-        if (subError) {
-            console.error('[attendance] Subscription fetch error:', subError);
-            return res.status(500).json({ error: 'Failed to check subscription' });
-        }
-
-        if (!subscription) {
-            return res.status(403).json({ error: 'No subscription found. Please register or contact support.' });
-        }
-
-        if (new Date() > new Date(subscription.expiry_date)) {
-            return res.status(403).json({
-                error: 'Subscription expired. Please renew your plan to continue.',
-                expired_at: subscription.expiry_date,
-            });
-        }
-
-        // ── GET – fetch attendance records ────────────────────────────────────
+        // ── GET – fetch all attendance records (no subscription check) ─────────
+        // Expired users can still view their historical data.
         if (req.method === 'GET') {
             const { data, error } = await supabase
                 .from('attendance')
-                .select('*')
+                .select('subject, date, status')
                 .eq('user_id', user_id)
                 .order('date', { ascending: false });
 
@@ -51,19 +27,52 @@ module.exports = async function handler(req, res) {
             return res.status(200).json({ attendance: data });
         }
 
-        // ── POST – upsert attendance record ───────────────────────────────────
+        // ── POST – subscription check before insert/update ────────────────────
         if (req.method === 'POST') {
+            // Enforce subscription expiry only on writes
+            const { data: subscription, error: subError } = await supabase
+                .from('subscriptions')
+                .select('expiry_date, plan, status')
+                .eq('user_id', user_id)
+                .order('expiry_date', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            if (subError) {
+                console.error('[attendance] Subscription fetch error:', subError);
+                return res.status(500).json({ error: 'Failed to check subscription' });
+            }
+
+            if (!subscription) {
+                return res.status(403).json({
+                    error: 'subscription_expired',
+                    message: 'No active subscription found. Please login to start your trial.',
+                    redirect: '/plans.html',
+                });
+            }
+
+            if (new Date() > new Date(subscription.expiry_date)) {
+                return res.status(403).json({
+                    error: 'subscription_expired',
+                    message: 'Your trial has ended. Upgrade to continue marking attendance.',
+                    expired_at: subscription.expiry_date,
+                    redirect: '/plans.html',
+                });
+            }
+
+            // ── Validate input ────────────────────────────────────────────────
             const { subject, date, status } = req.body || {};
 
             if (!subject || !date || !status) {
                 return res.status(400).json({ error: 'subject, date, and status are required' });
             }
 
-            const validStatuses = ['present', 'absent', 'cancelled'];
+            const validStatuses = ['P', 'A', 'present', 'absent', 'cancelled'];
             if (!validStatuses.includes(status)) {
                 return res.status(400).json({ error: `status must be one of: ${validStatuses.join(', ')}` });
             }
 
+            // ── Upsert attendance record ──────────────────────────────────────
             const { data, error } = await supabase
                 .from('attendance')
                 .upsert(
@@ -79,6 +88,28 @@ module.exports = async function handler(req, res) {
             }
 
             return res.status(200).json({ message: 'Attendance saved', record: data });
+        }
+
+        // ── DELETE – remove an attendance record ──────────────────────────────
+        if (req.method === 'DELETE') {
+            const { subject, date } = req.body || {};
+            if (!subject || !date) {
+                return res.status(400).json({ error: 'subject and date are required' });
+            }
+
+            const { error } = await supabase
+                .from('attendance')
+                .delete()
+                .eq('user_id', user_id)
+                .eq('subject', subject)
+                .eq('date', date);
+
+            if (error) {
+                console.error('[attendance] Delete error:', error);
+                return res.status(500).json({ error: 'Failed to delete attendance' });
+            }
+
+            return res.status(200).json({ message: 'Attendance record removed' });
         }
 
         return res.status(405).json({ error: 'Method Not Allowed' });

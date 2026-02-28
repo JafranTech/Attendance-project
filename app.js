@@ -11,10 +11,19 @@
 })();
 
 // --- Constants & Config ---
-const CONFIG_KEY = 'attendance_config';
-const DATA_KEY = 'attendance_data';
-const HOLIDAYS_KEY = 'attendance_holidays';
-const PROFILE_KEY = 'attendance_profile';
+// Config keys are scoped per user to prevent cross-user data leakage.
+// Attendance data is NEVER stored in localStorage — fetched from /api/attendance only.
+function getUserScopedKey(base) {
+    try {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        return user.id ? `${base}_${user.id}` : base;
+    } catch { return base; }
+}
+function CONFIG_KEY() { return getUserScopedKey('attendance_config'); }
+function HOLIDAYS_KEY() { return getUserScopedKey('attendance_holidays'); }
+function NOTES_KEY_FN() { return getUserScopedKey('attendance_notes'); }
+function SATURDAY_KEY_FN() { return getUserScopedKey('attendance_saturday_map'); }
+const PROFILE_KEY = 'attendance_profile'; // profile is device-level, not sensitive
 const THEME_KEY = 'attendance_theme';
 const ACADEMIC_START = new Date('2026-01-05T00:00:00');
 const ACADEMIC_END = new Date('2026-07-31T23:59:59');
@@ -308,8 +317,7 @@ function showSubscriptionLock(data) {
     const logoutBtn = document.getElementById('lock-logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
+            localStorage.clear();
             window.location.replace('login.html');
         });
     }
@@ -382,8 +390,7 @@ async function init() {
         logoutBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`;
         logoutBtn.addEventListener('click', () => {
             if (confirm('Are you sure you want to log out?')) {
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
+                localStorage.clear(); // wipe all user-state (token, config, attendance cache, notes, etc.)
                 window.location.replace('login.html');
             }
         });
@@ -392,6 +399,7 @@ async function init() {
     }
 
     if (userConfig) {
+        await loadAttendanceFromApi();
         showApp();
     } else {
         checkDepartment();
@@ -421,40 +429,67 @@ function checkDepartment() {
 }
 
 function loadData() {
-    const config = localStorage.getItem(CONFIG_KEY);
+    const configKey = CONFIG_KEY();
+    const config = localStorage.getItem(configKey);
     if (config) {
         userConfig = JSON.parse(config);
-        // Safety check: specific for the new IT elective split update
-        // If old config (has 'it_elective') or missing new fields, reset to force setup.
+        // Safety check: reset if old config schema
         if (userConfig.it_elective || !userConfig.it_elective_a || !userConfig.it_elective_b) {
-            console.log("Migrating/Resetting config for new update");
+            console.log('[loadData] Migrating config for new elective schema');
             userConfig = null;
-            localStorage.removeItem(CONFIG_KEY);
-            // Also reset department to force correct flow
+            localStorage.removeItem(configKey);
             localStorage.removeItem('department');
         }
     }
 
-    const data = localStorage.getItem(DATA_KEY);
-    if (data) attendanceData = JSON.parse(data);
+    // attendanceData is NEVER read from localStorage — it is fetched from /api/attendance
+    // See loadAttendanceFromApi() which is called in init()
 
-    const holidays = localStorage.getItem(HOLIDAYS_KEY);
+    const holidays = localStorage.getItem(HOLIDAYS_KEY());
     if (holidays) holidaysData = JSON.parse(holidays);
 
     const profile = localStorage.getItem(PROFILE_KEY);
     if (profile) profileData = JSON.parse(profile);
 
-    const notes = localStorage.getItem(NOTES_KEY);
+    const notes = localStorage.getItem(NOTES_KEY_FN());
     if (notes) notesData = JSON.parse(notes);
 
-    const satMap = localStorage.getItem(SATURDAY_KEY);
+    const satMap = localStorage.getItem(SATURDAY_KEY_FN());
     if (satMap) saturdayData = JSON.parse(satMap);
 }
 
+// Load attendance from backend — populates in-memory attendanceData
+async function loadAttendanceFromApi() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+        const res = await fetch('/api/attendance', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) {
+            console.warn('[loadAttendanceFromApi] Non-200 response:', res.status);
+            return;
+        }
+        const json = await res.json();
+        // API returns: [{ subject, date, status }]
+        // attendanceData structure: { 'YYYY-MM-DD': { 'SubjectName [Time]': 'P'|'A' } }
+        // Since backend stores subject as 'SubjectName [Time]', reconstruct directly
+        attendanceData = {};
+        (json.attendance || []).forEach(row => {
+            if (!attendanceData[row.date]) attendanceData[row.date] = {};
+            attendanceData[row.date][row.subject] = row.status;
+        });
+        console.log('[loadAttendanceFromApi] Loaded', (json.attendance || []).length, 'records');
+    } catch (err) {
+        console.warn('[loadAttendanceFromApi] Failed (offline?):', err.message);
+    }
+}
+
 function saveData() {
-    localStorage.setItem(DATA_KEY, JSON.stringify(attendanceData));
-    localStorage.setItem(HOLIDAYS_KEY, JSON.stringify(holidaysData));
-    localStorage.setItem(SATURDAY_KEY, JSON.stringify(saturdayData));
+    // NOTE: attendanceData is NOT saved to localStorage.
+    // It lives in memory only and is persisted to the backend via POST /api/attendance.
+    localStorage.setItem(HOLIDAYS_KEY(), JSON.stringify(holidaysData));
+    localStorage.setItem(SATURDAY_KEY_FN(), JSON.stringify(saturdayData));
 }
 
 // --- Theme Logic ---
@@ -563,9 +598,8 @@ setupForm.addEventListener('submit', (e) => {
         ssdx_elective: formData.get('ssdx_elective'),
         batch: formData.get('batch')
     };
-    // Ensure department key is synced
     localStorage.setItem('department', 'IT');
-    localStorage.setItem(CONFIG_KEY, JSON.stringify(userConfig));
+    localStorage.setItem(CONFIG_KEY(), JSON.stringify(userConfig));
     showApp();
 });
 
@@ -579,15 +613,14 @@ setupBioForm.addEventListener('submit', (e) => {
         chem_elective: formData.get('chem_elective'),
         batch: formData.get('batch')
     };
-    // Ensure department key is synced
     localStorage.setItem('department', 'BIO');
-    localStorage.setItem(CONFIG_KEY, JSON.stringify(userConfig));
+    localStorage.setItem(CONFIG_KEY(), JSON.stringify(userConfig));
     showApp();
 });
 
 resetBtn.addEventListener('click', () => {
     if (confirm("Are you sure you want to reset your setup? This won't delete attendance data.")) {
-        localStorage.removeItem(CONFIG_KEY);
+        localStorage.removeItem(CONFIG_KEY());
         localStorage.removeItem('department');
         userConfig = null;
         location.reload();
@@ -617,7 +650,7 @@ notesArea.addEventListener('input', () => {
     if (!subject) return;
 
     notesData[subject] = notesArea.value;
-    localStorage.setItem(NOTES_KEY, JSON.stringify(notesData));
+    localStorage.setItem(NOTES_KEY_FN(), JSON.stringify(notesData));
 
     notesStatus.textContent = 'Saving...';
     setTimeout(() => { notesStatus.textContent = 'Saved'; }, 800);
@@ -1218,18 +1251,55 @@ function renderHistoryList(filter) {
 
 
 // --- Mark Attendance ---
-window.mark = function (dateKey, storageKey, status) {
+window.mark = async function (dateKey, storageKey, newStatus) {
     if (!attendanceData[dateKey]) attendanceData[dateKey] = {};
 
-    if (attendanceData[dateKey][storageKey] === status) {
+    // Toggle: clicking same status again removes the record
+    const wasToggled = attendanceData[dateKey][storageKey] === newStatus;
+    if (wasToggled) {
         delete attendanceData[dateKey][storageKey];
     } else {
-        attendanceData[dateKey][storageKey] = status;
+        attendanceData[dateKey][storageKey] = newStatus;
     }
 
-    saveData();
+    // Re-render immediately for snappy UX
     selectDate(selectedDate);
     updateStats();
+
+    // Persist to backend asynchronously
+    const token = localStorage.getItem('token');
+    try {
+        const method = wasToggled ? 'DELETE' : 'POST';
+        const res = await fetch('/api/attendance', {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ subject: storageKey, date: dateKey, status: newStatus })
+        });
+
+        if (res.status === 403) {
+            const err = await res.json();
+            // Revert in-memory state
+            if (wasToggled) {
+                attendanceData[dateKey][storageKey] = newStatus;
+            } else {
+                delete attendanceData[dateKey][storageKey];
+            }
+            selectDate(selectedDate);
+            updateStats();
+            alert('⚠️ ' + (err.message || 'Your trial has ended. Please upgrade to continue.'));
+            return;
+        }
+
+        if (!res.ok) {
+            console.error('[mark] API error:', res.status);
+        }
+    } catch (err) {
+        console.warn('[mark] Network error (offline?):', err.message);
+        // Keep in-memory state as-is for offline resilience
+    }
 };
 
 function formatDateKey(date) {
@@ -1370,7 +1440,7 @@ function getResolvedSubjectName(slot, config) {
     return null;
 }
 
-window.markAll = function (dateKey, status) {
+window.markAll = async function (dateKey, status) {
     const action = status === 'P' ? 'Present' : 'Absent';
     if (!confirm(`Mark ALL classes for this date as ${action}?`)) return;
 
@@ -1387,16 +1457,44 @@ window.markAll = function (dateKey, status) {
     if (!slots) return;
     if (!attendanceData[dateKey]) attendanceData[dateKey] = {};
 
+    const toMark = [];
     slots.forEach(slot => {
         if (slot.type === 'break') return;
         const name = getResolvedSubjectName(slot, userConfig);
         if (name) {
             const uniqueKey = `${name} [${slot.time}]`;
             attendanceData[dateKey][uniqueKey] = status;
+            toMark.push(uniqueKey);
         }
     });
 
-    saveData();
+    // Re-render immediately
     selectDate(selectedDate);
     updateStats();
+
+    // Persist each record to backend
+    const token = localStorage.getItem('token');
+    for (const storageKey of toMark) {
+        try {
+            const res = await fetch('/api/attendance', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({ subject: storageKey, date: dateKey, status })
+            });
+            if (res.status === 403) {
+                const err = await res.json();
+                alert('⚠️ ' + (err.message || 'Your trial has ended. Please upgrade.'));
+                // Revert all in-memory
+                toMark.forEach(k => { delete attendanceData[dateKey][k]; });
+                selectDate(selectedDate);
+                updateStats();
+                return;
+            }
+        } catch (e) {
+            console.warn('[markAll] Network error:', e.message);
+        }
+    }
 };

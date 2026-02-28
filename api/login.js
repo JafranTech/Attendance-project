@@ -43,6 +43,32 @@ module.exports = async function handler(req, res) {
             return res.status(401).json({ error: 'Invalid email or password' });
         }
 
+        // ── Create trial subscription on FIRST login only ─────────────────────
+        // Uses ON CONFLICT DO NOTHING to handle race conditions safely.
+        // If a subscription row already exists for this user, nothing changes.
+        const now = new Date();
+        const trialExpiry = new Date(now.getTime() + 24 * 60 * 60 * 1000); // exactly 24 hours
+
+        const { error: subError } = await supabase
+            .from('subscriptions')
+            .insert({
+                user_id: user.id,
+                plan: 'trial',
+                start_date: now.toISOString(),
+                expiry_date: trialExpiry.toISOString(),
+                status: 'active',
+            })
+            .select()
+            // Supabase JS v2: to ignore duplicate key, check error code
+            // ON CONFLICT is handled by catching the unique violation below
+            ;
+
+        // Unique violation on user_id = subscription already exists — this is expected
+        if (subError && subError.code !== '23505') {
+            console.error('[login] Subscription insert error:', subError);
+            // Non-fatal: trial creation failed but login can still proceed
+        }
+
         // ── Sign JWT ──────────────────────────────────────────────────────────
         const token = jwt.sign(
             { user_id: user.id, email: user.email },
