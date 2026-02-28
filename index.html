@@ -223,6 +223,7 @@
                 <button id="next-month" class="icon-btn">▶</button>
 
                 <div class="header-right">
+                    <span id="plan-badge" class="plan-badge hidden"></span>
                     <button id="theme-toggle" class="icon-btn" aria-label="Toggle Theme">🌙</button>
                     <button id="reset-btn" class="icon-btn" aria-label="Reset Setup">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -351,6 +352,37 @@
             </div>
 
             <button id="save-profile-btn" class="btn-primary">Save Profile</button>
+        </div>
+    </div>
+
+    <!-- Subscription Lock Overlay -->
+    <div id="subscription-overlay" class="subscription-overlay hidden">
+        <div class="subscription-card">
+            <div class="lock-icon">🔒</div>
+            <h2 class="lock-title">Your Trial Has Ended</h2>
+            <p class="lock-subtitle">Upgrade to continue tracking attendance</p>
+
+            <div class="lock-plan-info">
+                <span id="lock-plan-name">Trial</span>
+                <span id="lock-expiry-text"></span>
+            </div>
+
+            <div class="upgrade-options">
+                <button class="upgrade-btn upgrade-monthly" id="upgrade-monthly-btn">
+                    <span class="upgrade-plan-name">Monthly</span>
+                    <span class="upgrade-price">₹10 / month</span>
+                    <span class="upgrade-desc">Full access for 30 days</span>
+                </button>
+                <button class="upgrade-btn upgrade-semester" id="upgrade-semester-btn">
+                    <span class="upgrade-plan-name">Semester ⭐</span>
+                    <span class="upgrade-price">₹29 / 6 months</span>
+                    <span class="upgrade-desc">Best value — save 52%</span>
+                </button>
+            </div>
+
+            <button class="lock-logout-btn" id="lock-logout-btn">
+                Sign out &rarr;
+            </button>
         </div>
     </div>
 

@@ -2,6 +2,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { getClient } = require('../lib/supabaseClient');
+const { requireEnv } = require('../lib/env');
 
 module.exports = async function handler(req, res) {
     try {
@@ -10,21 +11,22 @@ module.exports = async function handler(req, res) {
         }
 
         // ── Env guard ─────────────────────────────────────────────────────────
-        if (!process.env.JWT_SECRET) {
-            console.error('[login] JWT_SECRET is not set');
-            return res.status(500).json({ error: 'Server misconfiguration: JWT_SECRET missing' });
+        let jwtSecret;
+        try {
+            jwtSecret = requireEnv('JWT secret', ['JWT_SECRET', 'AUTH_JWT_SECRET']);
+        } catch (err) {
+            console.error('[login] JWT env error:', err.message);
+            return res.status(500).json({ error: `Server misconfiguration: ${err.message}` });
         }
 
         // ── Input validation ──────────────────────────────────────────────────
         const { email, password } = req.body || {};
-
         if (!email || !password) {
             return res.status(400).json({ error: 'email and password are required' });
         }
 
         // ── Supabase lookup ───────────────────────────────────────────────────
         const supabase = getClient();
-
         const { data: user, error: userError } = await supabase
             .from('users')
             .select('id, email, password_hash, name')
@@ -44,7 +46,7 @@ module.exports = async function handler(req, res) {
         // ── Sign JWT ──────────────────────────────────────────────────────────
         const token = jwt.sign(
             { user_id: user.id, email: user.email },
-            process.env.JWT_SECRET,
+            jwtSecret,
             { expiresIn: '7d' }
         );
 

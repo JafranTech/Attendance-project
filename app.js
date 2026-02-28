@@ -246,8 +246,127 @@ const saturdayModal = document.getElementById('saturday-modal');
 
 let selectedHistorySubject = null; // State for drilldown
 
+// --- Subscription Enforcement ---
+
+async function checkSubscriptionStatus() {
+    const token = localStorage.getItem('token');
+    if (!token) return; // auth guard already redirects
+
+    try {
+        const res = await fetch('/api/subscription', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+
+        if (data.status === 'expired' || data.status === 'none') {
+            showSubscriptionLock(data);
+            return false; // blocked
+        }
+
+        // Active — inject plan badge into header
+        const badge = document.getElementById('plan-badge');
+        if (badge) {
+            const plan = data.plan || 'trial';
+            const days = data.days_remaining || 0;
+
+            if (plan === 'trial') {
+                badge.textContent = `🎯 Trial – ${days} day${days !== 1 ? 's' : ''} left`;
+                badge.className = 'plan-badge badge-trial';
+            } else if (plan === 'monthly') {
+                badge.textContent = `✅ Monthly`;
+                badge.className = 'plan-badge badge-active';
+            } else if (plan === 'semester') {
+                badge.textContent = `✅ Semester`;
+                badge.className = 'plan-badge badge-active';
+            }
+            badge.classList.remove('hidden');
+        }
+
+        return true; // allowed
+    } catch (err) {
+        console.warn('[subscription] Check failed (offline?):', err.message);
+        return true; // allow offline usage gracefully
+    }
+}
+
+function showSubscriptionLock(data) {
+    const overlay = document.getElementById('subscription-overlay');
+    if (!overlay) return;
+
+    // Fill in plan info
+    const planNameEl = document.getElementById('lock-plan-name');
+    const expiryEl = document.getElementById('lock-expiry-text');
+    if (planNameEl) planNameEl.textContent = data.plan || 'Trial';
+    if (expiryEl && data.expiry_date) {
+        const expiry = new Date(data.expiry_date);
+        expiryEl.textContent = `Expired ${expiry.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+    }
+
+    overlay.classList.remove('hidden');
+
+    // Logout button on lock screen
+    const logoutBtn = document.getElementById('lock-logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.replace('login.html');
+        });
+    }
+
+    // Upgrade buttons — initiate Razorpay payment
+    const token = localStorage.getItem('token');
+
+    async function startUpgrade(plan) {
+        try {
+            const r = await fetch('/api/create-order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({ plan })
+            });
+            const order = await r.json();
+            if (!r.ok) throw new Error(order.error || 'Failed to create order');
+
+            if (typeof Razorpay === 'undefined') {
+                alert('Payment gateway not loaded. Please refresh and try again.');
+                return;
+            }
+
+            const rzp = new Razorpay({
+                key: order.razorpay_key_id || '',
+                amount: order.amount,
+                currency: order.currency,
+                name: 'Attendance App',
+                description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`,
+                order_id: order.order_id,
+                handler: function () {
+                    overlay.classList.add('hidden');
+                    alert('Payment successful! Your plan has been upgraded.');
+                    window.location.reload();
+                },
+                theme: { color: '#2563EB' }
+            });
+            rzp.open();
+        } catch (err) {
+            alert('Could not initiate payment: ' + err.message);
+        }
+    }
+
+    const monthlyBtn = document.getElementById('upgrade-monthly-btn');
+    const semesterBtn = document.getElementById('upgrade-semester-btn');
+    if (monthlyBtn) monthlyBtn.addEventListener('click', () => startUpgrade('monthly'));
+    if (semesterBtn) semesterBtn.addEventListener('click', () => startUpgrade('semester'));
+}
+
 // --- Initialization ---
-function init() {
+async function init() {
+    // ── Subscription check first ───────────────────────────────────────────
+    const allowed = await checkSubscriptionStatus();
+    if (allowed === false) return; // lock screen shown, stop init
+
     loadData();
     loadTheme();
     // Always render profile UI regardless of config state
@@ -278,6 +397,7 @@ function init() {
         checkDepartment();
     }
 }
+
 
 function checkDepartment() {
     const dept = localStorage.getItem('department');

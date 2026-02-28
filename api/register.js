@@ -8,21 +8,24 @@ module.exports = async function handler(req, res) {
             return res.status(405).json({ error: 'Method Not Allowed' });
         }
 
-        // ── Input validation ──────────────────────────────────────────────────
         const { name, email, password } = req.body || {};
-
         if (!name || !email || !password) {
             return res.status(400).json({ error: 'name, email, and password are required' });
         }
 
         const supabase = getClient();
 
-        // ── Duplicate check ───────────────────────────────────────────────────
-        const { data: existing } = await supabase
+        // ── Duplicate email check ─────────────────────────────────────────────
+        const { data: existing, error: checkError } = await supabase
             .from('users')
             .select('id')
             .eq('email', email)
             .maybeSingle();
+
+        if (checkError) {
+            console.error('[register] Duplicate-check query failed:', checkError);
+            return res.status(500).json({ error: 'Database error during email check', detail: checkError.message });
+        }
 
         if (existing) {
             return res.status(409).json({ error: 'Email already registered' });
@@ -40,7 +43,7 @@ module.exports = async function handler(req, res) {
 
         if (userError) {
             console.error('[register] User insert error:', userError);
-            return res.status(500).json({ error: 'Failed to create user' });
+            return res.status(500).json({ error: 'Failed to create user', detail: userError.message });
         }
 
         // ── Create 2-day free trial subscription ──────────────────────────────
@@ -57,7 +60,7 @@ module.exports = async function handler(req, res) {
 
         if (subError) {
             console.error('[register] Subscription insert error:', subError);
-            return res.status(500).json({ error: 'Failed to create trial subscription' });
+            return res.status(500).json({ error: 'Failed to create trial subscription', detail: subError.message });
         }
 
         return res.status(201).json({ message: 'Registration successful. 2-day free trial activated.' });

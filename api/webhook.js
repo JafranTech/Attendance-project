@@ -1,16 +1,10 @@
 'use strict';
 const crypto = require('crypto');
 const { getClient } = require('../lib/supabaseClient');
+const { requireEnv } = require('../lib/env');
 
-const PLAN_DAYS = {
-    monthly: 30,
-    semester: 180,
-};
+const PLAN_DAYS = { monthly: 30, semester: 180 };
 
-// ── Vercel body-parser config ─────────────────────────────────────────────────
-// Must be exported BEFORE module.exports is reassigned. We use a named export
-// pattern that Vercel reads from the module object.
-// NOTE: In Vercel Node 20+, export this via a named property on the handler.
 async function handler(req, res) {
     try {
         if (req.method !== 'POST') {
@@ -18,12 +12,14 @@ async function handler(req, res) {
         }
 
         // ── Env guard ─────────────────────────────────────────────────────────
-        if (!process.env.RAZORPAY_WEBHOOK_SECRET) {
-            console.error('[webhook] RAZORPAY_WEBHOOK_SECRET not set');
-            return res.status(500).json({ error: 'Server misconfiguration' });
+        let webhookSecret;
+        try {
+            webhookSecret = requireEnv('Razorpay webhook secret', ['RAZORPAY_WEBHOOK_SECRET']);
+        } catch (err) {
+            console.error('[webhook] Env error:', err.message);
+            return res.status(500).json({ error: `Server misconfiguration: ${err.message}` });
         }
 
-        // ── Read raw body for HMAC verification ───────────────────────────────
         const rawBody = await getRawBody(req);
         const razorpaySignature = req.headers['x-razorpay-signature'];
 
@@ -31,9 +27,8 @@ async function handler(req, res) {
             return res.status(400).json({ error: 'Missing x-razorpay-signature header' });
         }
 
-        // ── HMAC SHA256 verification ──────────────────────────────────────────
         const expectedSignature = crypto
-            .createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET)
+            .createHmac('sha256', webhookSecret)
             .update(rawBody)
             .digest('hex');
 
@@ -42,7 +37,6 @@ async function handler(req, res) {
             return res.status(400).json({ error: 'Invalid signature' });
         }
 
-        // ── Parse event ───────────────────────────────────────────────────────
         let event;
         try {
             event = JSON.parse(rawBody);
@@ -50,7 +44,6 @@ async function handler(req, res) {
             return res.status(400).json({ error: 'Invalid JSON payload' });
         }
 
-        // Only process successful payments
         if (event.event !== 'payment.captured') {
             return res.status(200).json({ received: true });
         }
@@ -66,11 +59,10 @@ async function handler(req, res) {
         const days = parseInt(notes.days, 10) || PLAN_DAYS[plan];
 
         if (!user_id || !plan || !days) {
-            console.error('[webhook] Missing metadata in payment notes:', notes);
+            console.error('[webhook] Missing metadata:', notes);
             return res.status(400).json({ error: 'Missing user_id, plan, or days in payment notes' });
         }
 
-        // ── Calculate new expiry ──────────────────────────────────────────────
         const supabase = getClient();
 
         const { data: existing } = await supabase
@@ -88,16 +80,10 @@ async function handler(req, res) {
         const newExpiry = new Date(base);
         newExpiry.setDate(newExpiry.getDate() + days);
 
-        // ── Upsert subscription ────────────────────────────────────────────────
         const { error } = await supabase
             .from('subscriptions')
             .upsert(
-                {
-                    user_id,
-                    plan,
-                    expiry_date: newExpiry.toISOString(),
-                    razorpay_payment_id: payment.id,
-                },
+                { user_id, plan, expiry_date: newExpiry.toISOString(), razorpay_payment_id: payment.id },
                 { onConflict: 'user_id' }
             );
 
@@ -106,7 +92,7 @@ async function handler(req, res) {
             return res.status(500).json({ error: 'Failed to update subscription' });
         }
 
-        console.log(`[webhook] Subscription updated: user=${user_id} plan=${plan} expires=${newExpiry.toISOString()}`);
+        console.log(`[webhook] Updated: user=${user_id} plan=${plan} expires=${newExpiry.toISOString()}`);
         return res.status(200).json({ success: true });
 
     } catch (err) {
@@ -124,9 +110,5 @@ function getRawBody(req) {
     });
 }
 
-// Attach Vercel config to the handler function before exporting
-handler.config = {
-    api: { bodyParser: false },
-};
-
+handler.config = { api: { bodyParser: false } };
 module.exports = handler;

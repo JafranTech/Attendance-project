@@ -913,3 +913,204 @@ body.dark-mode .btn-absent-all {
 .logout-btn:active {
     transform: scale(0.92);
 }
+
+/* ── Plan Badge ──────────────────────────────────────────────────────────── */
+.plan-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    transition: opacity 0.3s;
+}
+
+.plan-badge.badge-trial {
+    background: #FFF7ED;
+    color: #C2410C;
+    border: 1px solid #FDBA74;
+}
+
+.plan-badge.badge-active {
+    background: #F0FDF4;
+    color: #15803D;
+    border: 1px solid #86EFAC;
+}
+
+.plan-badge.badge-expired {
+    background: #FEF2F2;
+    color: #B91C1C;
+    border: 1px solid #FCA5A5;
+}
+
+body.dark-mode .plan-badge.badge-trial {
+    background: #431407;
+    color: #FB923C;
+    border-color: #9A3412;
+}
+
+body.dark-mode .plan-badge.badge-active {
+    background: #052E16;
+    color: #4ADE80;
+    border-color: #166534;
+}
+
+body.dark-mode .plan-badge.badge-expired {
+    background: #450A0A;
+    color: #F87171;
+    border-color: #991B1B;
+}
+
+/* ── Subscription Lock Overlay ───────────────────────────────────────────── */
+.subscription-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    animation: fadeInOverlay 0.35s ease;
+}
+
+@keyframes fadeInOverlay {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.subscription-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    padding: 32px 24px;
+    max-width: 380px;
+    width: 100%;
+    text-align: center;
+}
+
+.lock-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    filter: grayscale(0.2);
+}
+
+.lock-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 6px;
+}
+
+.lock-subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+}
+
+.lock-plan-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    padding: 10px 16px;
+    background: var(--bg);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.lock-plan-info span:first-child {
+    font-weight: 600;
+    color: var(--text-main);
+    text-transform: capitalize;
+}
+
+.upgrade-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.upgrade-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 14px 18px;
+    border-radius: 14px;
+    border: 2px solid var(--border);
+    background: var(--card-bg);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    gap: 2px;
+}
+
+.upgrade-btn:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.15);
+}
+
+.upgrade-btn:active {
+    transform: translateY(0);
+}
+
+.upgrade-plan-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.upgrade-price {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.upgrade-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.upgrade-semester {
+    border-color: var(--primary);
+    background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+}
+
+body.dark-mode .upgrade-semester {
+    background: linear-gradient(135deg, #1E3A5F 0%, #1E40AF22 100%);
+}
+
+.upgrade-semester .upgrade-plan-name {
+    color: var(--primary-dark);
+}
+
+.lock-logout-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: color 0.2s;
+}
+
+.lock-logout-btn:hover {
+    color: var(--danger);
+}

@@ -1,11 +1,11 @@
 'use strict';
 const Razorpay = require('razorpay');
 const { authenticate } = require('../lib/authMiddleware');
+const { requireEnv } = require('../lib/env');
 
-// Plan definitions (amounts in paise: 1 INR = 100 paise)
 const PLANS = {
-    monthly: { amount: 1000, currency: 'INR', days: 30 }, // ₹10
-    semester: { amount: 2900, currency: 'INR', days: 180 }, // ₹29
+    monthly: { amount: 1000, currency: 'INR', days: 30 },
+    semester: { amount: 2900, currency: 'INR', days: 180 },
 };
 
 module.exports = async function handler(req, res) {
@@ -17,14 +17,16 @@ module.exports = async function handler(req, res) {
         if (!authenticate(req, res)) return;
 
         // ── Env guard ─────────────────────────────────────────────────────────
-        if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-            console.error('[create-order] Razorpay env vars missing');
-            return res.status(500).json({ error: 'Server misconfiguration: Razorpay keys missing' });
+        let keyId, keySecret;
+        try {
+            keyId = requireEnv('Razorpay Key ID', ['RAZORPAY_KEY_ID']);
+            keySecret = requireEnv('Razorpay Key Secret', ['RAZORPAY_KEY_SECRET']);
+        } catch (err) {
+            console.error('[create-order] Razorpay env error:', err.message);
+            return res.status(500).json({ error: `Server misconfiguration: ${err.message}` });
         }
 
-        // ── Input validation ──────────────────────────────────────────────────
         const { plan } = req.body || {};
-
         if (!plan || !PLANS[plan]) {
             return res.status(400).json({
                 error: `Invalid plan. Valid options: ${Object.keys(PLANS).join(', ')}`,
@@ -32,12 +34,7 @@ module.exports = async function handler(req, res) {
         }
 
         const { amount, currency, days } = PLANS[plan];
-
-        // ── Create Razorpay order (lazy init inside handler) ──────────────────
-        const razorpay = new Razorpay({
-            key_id: process.env.RAZORPAY_KEY_ID,
-            key_secret: process.env.RAZORPAY_KEY_SECRET,
-        });
+        const razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
 
         const order = await razorpay.orders.create({
             amount,

@@ -20,6 +20,10 @@
         "api/webhook.js": {
             "memory": 128,
             "maxDuration": 15
+        },
+        "api/subscription.js": {
+            "memory": 128,
+            "maxDuration": 10
         }
     },
     "routes": [
