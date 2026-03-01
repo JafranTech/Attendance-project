@@ -1114,3 +1114,35 @@ body.dark-mode .upgrade-semester {
 .lock-logout-btn:hover {
     color: var(--danger);
 }
+
+/* ── Plan badge ─────────────────────────────────────────────────────────── */
+.plan-badge {
+    cursor: pointer !important;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 99px;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+    white-space: nowrap;
+}
+
+.plan-badge:hover {
+    transform: scale(1.04);
+    opacity: 0.8;
+}
+
+.badge-trial {
+    background: #fff8e1;
+    color: #b45309;
+    border: 1px solid #fcd34d;
+}
+
+.badge-active {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+}

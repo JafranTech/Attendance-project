@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Plans &amp; Upgrade – Attendance App</title>
+    <meta name="description" content="Manage your subscription plan for the Attendance PWA." />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- Razorpay SDK -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <style>
+        /* ── Page layout ───────────────────────────────────────────────────── */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg, #f5f7fa);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 24px 16px 48px;
+            color: var(--text, #1a1a2e);
+        }
+
+        .plans-wrapper {
+            width: 100%;
+            max-width: 480px;
+        }
+
+        /* ── Back link ─────────────────────────────────────────────────────── */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--primary, #2563eb);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 24px;
+            transition: opacity 0.15s;
+        }
+
+        .back-link:hover {
+            opacity: 0.75;
+        }
+
+        /* ── Current subscription card ─────────────────────────────────────── */
+        .current-plan-card {
+            background: var(--card-bg, #fff);
+            border-radius: 16px;
+            padding: 20px 22px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+        }
+
+        .current-plan-card h2 {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted, #64748b);
+            margin: 0 0 12px;
+        }
+
+        .plan-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .plan-pill {
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 99px;
+            background: #dbeafe;
+            color: #1d4ed8;
+            text-transform: capitalize;
+            white-space: nowrap;
+        }
+
+        .plan-pill.expired {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .plan-pill.active {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .plan-expiry {
+            font-size: 0.85rem;
+            color: var(--text-muted, #64748b);
+        }
+
+        .plan-expiry strong {
+            color: var(--text, #1a1a2e);
+        }
+
+        .plan-days {
+            margin-top: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .plan-days.green {
+            color: #16a34a;
+        }
+
+        .plan-days.orange {
+            color: #d97706;
+        }
+
+        .plan-days.red {
+            color: #dc2626;
+        }
+
+        /* ── Alert banner ──────────────────────────────────────────────────── */
+        .alert-banner {
+            background: #fef3c7;
+            border: 1px solid #fcd34d;
+            border-radius: 10px;
+            padding: 12px 14px;
+            font-size: 0.87rem;
+            line-height: 1.5;
+            color: #92400e;
+            margin-bottom: 20px;
+        }
+
+        .alert-banner.red {
+            background: #fef2f2;
+            border-color: #fca5a5;
+            color: #991b1b;
+        }
+
+        /* ── Section title ─────────────────────────────────────────────────── */
+        .section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted, #64748b);
+            margin-bottom: 12px;
+        }
+
+        /* ── Plan cards ────────────────────────────────────────────────────── */
+        .plan-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-bottom: 32px;
+        }
+
+        .plan-card {
+            background: var(--card-bg, #fff);
+            border: 2px solid var(--border, #e2e8f0);
+            border-radius: 16px;
+            padding: 20px 20px;
+            cursor: pointer;
+            transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+            position: relative;
+        }
+
+        .plan-card:hover:not(.disabled) {
+            border-color: #2563eb;
+            box-shadow: 0 4px 16px rgba(37, 99, 235, 0.12);
+            transform: translateY(-1px);
+        }
+
+        .plan-card.featured {
+            border-color: #2563eb;
+            background: linear-gradient(135deg, #eff6ff 0%, #fff 100%);
+        }
+
+        .plan-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .plan-card-badge {
+            position: absolute;
+            top: -10px;
+            right: 16px;
+            background: #2563eb;
+            color: #fff;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 99px;
+            letter-spacing: 0.05em;
+        }
+
+        .plan-card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 0 0 4px;
+        }
+
+        .plan-card-price {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2563eb;
+            margin: 0 0 4px;
+        }
+
+        .plan-card-desc {
+            font-size: 0.83rem;
+            color: var(--text-muted, #64748b);
+            margin: 0;
+        }
+
+        /* ── CTA button ────────────────────────────────────────────────────── */
+        .btn-upgrade {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: opacity 0.2s;
+        }
+
+        .btn-upgrade.primary {
+            background: #2563eb;
+            color: #fff;
+        }
+
+        .btn-upgrade.primary:hover {
+            opacity: 0.88;
+        }
+
+        .btn-upgrade:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ── Sign-out ──────────────────────────────────────────────────────── */
+        .signout-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.87rem;
+            color: var(--text-muted, #64748b);
+            cursor: pointer;
+            text-decoration: underline;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+
+        .signout-link:hover {
+            color: #dc2626;
+        }
+
+        /* ── Loading / error states ────────────────────────────────────────── */
+        .loading-txt {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--text-muted, #64748b);
+        }
+
+        /* ── Dark-mode compatibility ────────────────────────────────────────── */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0f172a;
+                --card-bg: #1e293b;
+                --text: #f1f5f9;
+                --text-muted: #94a3b8;
+                --border: #334155;
+                --primary: #60a5fa;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="plans-wrapper">
+        <a href="index.html" class="back-link">← Back to App</a>
+
+        <div id="plans-content">
+            <p class="loading-txt">Loading your plan…</p>
+        </div>
+
+        <button class="signout-link" id="plans-signout-btn">Sign out →</button>
+    </div>
+
+    <script>
+        // ── Auth guard ────────────────────────────────────────────────────────────
+        (function () {
+            if (!localStorage.getItem('token')) {
+                window.location.replace('login.html');
+            }
+        })();
+
+        // ── Theme: apply saved theme so dark mode persists ────────────────────────
+        (function () {
+            const saved = localStorage.getItem('attendance_theme');
+            if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        })();
+
+        const token = localStorage.getItem('token');
+
+        // ── Sign-out ──────────────────────────────────────────────────────────────
+        document.getElementById('plans-signout-btn').addEventListener('click', () => {
+            if (confirm('Sign out?')) {
+                localStorage.clear();
+                window.location.replace('login.html');
+            }
+        });
+
+        // ── Fetch subscription and render ─────────────────────────────────────────
+        async function loadPlans() {
+            const container = document.getElementById('plans-content');
+
+            let sub = null;
+            try {
+                const res = await fetch('/api/subscription', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                sub = await res.json();
+            } catch (err) {
+                container.innerHTML = `<p class="loading-txt" style="color:#dc2626">Failed to load subscription.<br>${err.message}</p>`;
+                return;
+            }
+
+            const isExpired = sub.status === 'expired' || sub.status === 'none' || !sub.plan;
+            const isTrial = sub.plan === 'trial';
+            const daysLeft = sub.days_remaining ?? 0;
+
+            // ── Format expiry date ──────────────────────────────────────────────
+            let expiryStr = '—';
+            if (sub.expiry_date) {
+                const d = new Date(sub.expiry_date);
+                expiryStr = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+            }
+
+            // ── Days remaining label ────────────────────────────────────────────
+            let daysHtml = '';
+            if (isExpired) {
+                daysHtml = `<div class="plan-days red">⛔ Subscription expired</div>`;
+            } else if (isTrial) {
+                const cls = daysLeft > 1 ? 'green' : 'orange';
+                daysHtml = `<div class="plan-days ${cls}">🎯 ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left on trial</div>`;
+            } else {
+                const cls = daysLeft > 30 ? 'green' : daysLeft > 7 ? 'orange' : 'red';
+                daysHtml = `<div class="plan-days ${cls}">✅ ${daysLeft} day${daysLeft !== 1 ? 's' : ''} remaining</div>`;
+            }
+
+            // ── Alert banner ────────────────────────────────────────────────────
+            let alertHtml = '';
+            if (isExpired) {
+                alertHtml = `<div class="alert-banner red">⚠️ Your trial has ended. Upgrade below to continue marking attendance and syncing your data.</div>`;
+            } else if (isTrial) {
+                alertHtml = `<div class="alert-banner">💡 Your trial gives you full access. Upgrade now to keep your data after it ends.</div>`;
+            }
+
+            // ── Pill class ──────────────────────────────────────────────────────
+            const pillClass = isExpired ? 'expired' : isTrial ? '' : 'active';
+            const planLabel = sub.plan ? (sub.plan.charAt(0).toUpperCase() + sub.plan.slice(1)) : 'None';
+
+            container.innerHTML = `
+            <!-- Current plan card -->
+            <div class="current-plan-card">
+                <h2>Your current plan</h2>
+                <div class="plan-row">
+                    <span class="plan-pill ${pillClass}">${planLabel}</span>
+                    <span class="plan-expiry">${isExpired ? 'Expired' : 'Expires'} <strong>${expiryStr}</strong></span>
+                </div>
+                ${daysHtml}
+            </div>
+
+            ${alertHtml}
+
+            <!-- Upgrade options -->
+            <div class="section-title">Upgrade your plan</div>
+            <div class="plan-cards">
+
+                <div class="plan-card" id="card-monthly">
+                    <div class="plan-card-title">Monthly</div>
+                    <div class="plan-card-price">₹10 <span style="font-size:1rem;font-weight:500;color:#64748b">/ month</span></div>
+                    <p class="plan-card-desc">Full access for 30 days.</p>
+                </div>
+
+                <div class="plan-card featured" id="card-semester">
+                    <div class="plan-card-badge">⭐ Best Value</div>
+                    <div class="plan-card-title">Semester</div>
+                    <div class="plan-card-price">₹29 <span style="font-size:1rem;font-weight:500;color:#64748b">/ 6 months</span></div>
+                    <p class="plan-card-desc">Full access for 180 days — save 52%.</p>
+                </div>
+
+            </div>
+
+            <button class="btn-upgrade primary" id="btn-monthly">Upgrade to Monthly — ₹10</button>
+            <div style="height:10px"></div>
+            <button class="btn-upgrade primary" id="btn-semester" style="background:#1d4ed8">Upgrade to Semester — ₹29</button>
+        `;
+
+            // ── Card → button wiring ────────────────────────────────────────────
+            document.getElementById('card-monthly').addEventListener('click', () => startUpgrade('monthly'));
+            document.getElementById('card-semester').addEventListener('click', () => startUpgrade('semester'));
+            document.getElementById('btn-monthly').addEventListener('click', () => startUpgrade('monthly'));
+            document.getElementById('btn-semester').addEventListener('click', () => startUpgrade('semester'));
+        }
+
+        // ── Razorpay payment flow ─────────────────────────────────────────────────
+        async function startUpgrade(plan) {
+            try {
+                const r = await fetch('/api/create-order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ plan })
+                });
+                const order = await r.json();
+                if (!r.ok) throw new Error(order.error || 'Failed to create order');
+
+                if (typeof Razorpay === 'undefined') {
+                    alert('Payment gateway not loaded. Please refresh and try again.');
+                    return;
+                }
+
+                const rzp = new Razorpay({
+                    key: order.razorpay_key_id || '',
+                    amount: order.amount,
+                    currency: order.currency,
+                    name: 'Attendance App',
+                    description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`,
+                    order_id: order.order_id,
+                    handler: function () {
+                        alert('✅ Payment successful! Your plan has been upgraded.');
+                        window.location.href = 'index.html';
+                    },
+                    modal: {
+                        ondismiss: function () {
+                            console.log('[plans] Payment dismissed');
+                        }
+                    },
+                    theme: { color: '#2563EB' }
+                });
+                rzp.open();
+
+            } catch (err) {
+                alert('Could not initiate payment: ' + err.message);
+            }
+        }
+
+        // ── Bootstrap ─────────────────────────────────────────────────────────────
+        loadPlans();
+    </script>
+</body>
+
+</html>

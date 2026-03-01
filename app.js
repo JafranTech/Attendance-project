@@ -289,6 +289,12 @@ async function checkSubscriptionStatus() {
                 badge.className = 'plan-badge badge-active';
             }
             badge.classList.remove('hidden');
+            // Make badge clickable → navigate to plans page
+            badge.style.cursor = 'pointer';
+            badge.title = 'View your plan';
+            badge.addEventListener('click', () => {
+                window.location.href = 'plans.html';
+            });
         }
 
         return true; // allowed
