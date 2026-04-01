@@ -9,10 +9,12 @@
     <link rel="stylesheet" href="style.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <!-- Razorpay SDK -->
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+    <!-- BUG 5 FIX: defer prevents SDK from blocking HTML parsing -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
+
     <style>
-        /* ── Page layout ───────────────────────────────────────────────────── */
+        /* ── Page layout ─────────────────────────────────────────────────────── */
         body {
             font-family: 'Inter', sans-serif;
             background: var(--bg, #f5f7fa);
@@ -30,7 +32,7 @@
             max-width: 480px;
         }
 
-        /* ── Back link ─────────────────────────────────────────────────────── */
+        /* ── Back link ───────────────────────────────────────────────────────── */
         .back-link {
             display: inline-flex;
             align-items: center;
@@ -43,11 +45,9 @@
             transition: opacity 0.15s;
         }
 
-        .back-link:hover {
-            opacity: 0.75;
-        }
+        .back-link:hover { opacity: 0.75; }
 
-        /* ── Current subscription card ─────────────────────────────────────── */
+        /* ── Current subscription card ───────────────────────────────────────── */
         .current-plan-card {
             background: var(--card-bg, #fff);
             border-radius: 16px;
@@ -82,44 +82,22 @@
             white-space: nowrap;
         }
 
-        .plan-pill.expired {
-            background: #fee2e2;
-            color: #b91c1c;
-        }
-
-        .plan-pill.active {
-            background: #dcfce7;
-            color: #15803d;
-        }
+        .plan-pill.expired { background: #fee2e2; color: #b91c1c; }
+        .plan-pill.active  { background: #dcfce7; color: #15803d; }
 
         .plan-expiry {
             font-size: 0.85rem;
             color: var(--text-muted, #64748b);
         }
 
-        .plan-expiry strong {
-            color: var(--text, #1a1a2e);
-        }
+        .plan-expiry strong { color: var(--text, #1a1a2e); }
 
-        .plan-days {
-            margin-top: 10px;
-            font-size: 0.95rem;
-            font-weight: 600;
-        }
+        .plan-days           { margin-top: 10px; font-size: 0.95rem; font-weight: 600; }
+        .plan-days.green     { color: #16a34a; }
+        .plan-days.orange    { color: #d97706; }
+        .plan-days.red       { color: #dc2626; }
 
-        .plan-days.green {
-            color: #16a34a;
-        }
-
-        .plan-days.orange {
-            color: #d97706;
-        }
-
-        .plan-days.red {
-            color: #dc2626;
-        }
-
-        /* ── Alert banner ──────────────────────────────────────────────────── */
+        /* ── Alert banner ────────────────────────────────────────────────────── */
         .alert-banner {
             background: #fef3c7;
             border: 1px solid #fcd34d;
@@ -131,13 +109,10 @@
             margin-bottom: 20px;
         }
 
-        .alert-banner.red {
-            background: #fef2f2;
-            border-color: #fca5a5;
-            color: #991b1b;
-        }
+        .alert-banner.red { background: #fef2f2; border-color: #fca5a5; color: #991b1b; }
+        .alert-banner.green { background: #f0fdf4; border-color: #86efac; color: #166534; }
 
-        /* ── Section title ─────────────────────────────────────────────────── */
+        /* ── Section title ───────────────────────────────────────────────────── */
         .section-title {
             font-size: 0.75rem;
             font-weight: 600;
@@ -147,7 +122,7 @@
             margin-bottom: 12px;
         }
 
-        /* ── Plan cards ────────────────────────────────────────────────────── */
+        /* ── Plan cards ──────────────────────────────────────────────────────── */
         .plan-cards {
             display: flex;
             flex-direction: column;
@@ -176,10 +151,7 @@
             background: linear-gradient(135deg, #eff6ff 0%, #fff 100%);
         }
 
-        .plan-card.disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+        .plan-card.disabled { opacity: 0.5; cursor: not-allowed; }
 
         .plan-card-badge {
             position: absolute;
@@ -194,11 +166,7 @@
             letter-spacing: 0.05em;
         }
 
-        .plan-card-title {
-            font-size: 1rem;
-            font-weight: 700;
-            margin: 0 0 4px;
-        }
+        .plan-card-title { font-size: 1rem; font-weight: 700; margin: 0 0 4px; }
 
         .plan-card-price {
             font-size: 1.5rem;
@@ -207,13 +175,9 @@
             margin: 0 0 4px;
         }
 
-        .plan-card-desc {
-            font-size: 0.83rem;
-            color: var(--text-muted, #64748b);
-            margin: 0;
-        }
+        .plan-card-desc { font-size: 0.83rem; color: var(--text-muted, #64748b); margin: 0; }
 
-        /* ── CTA button ────────────────────────────────────────────────────── */
+        /* ── CTA buttons ─────────────────────────────────────────────────────── */
         .btn-upgrade {
             display: block;
             width: 100%;
@@ -224,24 +188,81 @@
             font-weight: 600;
             cursor: pointer;
             text-align: center;
-            transition: opacity 0.2s;
+            transition: opacity 0.2s, transform 0.1s;
+            position: relative;
         }
 
-        .btn-upgrade.primary {
-            background: #2563eb;
-            color: #fff;
-        }
+        .btn-upgrade.primary { background: #2563eb; color: #fff; }
+        .btn-upgrade.primary-dark { background: #1d4ed8; color: #fff; }
 
-        .btn-upgrade.primary:hover {
-            opacity: 0.88;
-        }
+        .btn-upgrade:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
 
         .btn-upgrade:disabled {
-            opacity: 0.5;
+            opacity: 0.55;
             cursor: not-allowed;
+            transform: none;
         }
 
-        /* ── Sign-out ──────────────────────────────────────────────────────── */
+        /* ── Payment processing overlay ──────────────────────────────────────── */
+        .payment-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.65);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .payment-overlay.visible {
+            display: flex;
+        }
+
+        .payment-overlay-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 32px 28px;
+            text-align: center;
+            max-width: 320px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .payment-overlay-icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .payment-overlay-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin: 0 0 8px;
+        }
+
+        .payment-overlay-msg {
+            font-size: 0.87rem;
+            color: #64748b;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid #e2e8f0;
+            border-top-color: #2563eb;
+            border-radius: 50%;
+            animation: spin 0.75s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Sign-out ────────────────────────────────────────────────────────── */
         .signout-link {
             display: block;
             text-align: center;
@@ -253,20 +274,19 @@
             background: none;
             border: none;
             padding: 0;
+            transition: color 0.15s;
         }
 
-        .signout-link:hover {
-            color: #dc2626;
-        }
+        .signout-link:hover { color: #dc2626; }
 
-        /* ── Loading / error states ────────────────────────────────────────── */
+        /* ── Loading / error states ──────────────────────────────────────────── */
         .loading-txt {
             text-align: center;
             padding: 40px 0;
             color: var(--text-muted, #64748b);
         }
 
-        /* ── Dark-mode compatibility ────────────────────────────────────────── */
+        /* ── Dark mode ───────────────────────────────────────────────────────── */
         @media (prefers-color-scheme: dark) {
             :root {
                 --bg: #0f172a;
@@ -276,11 +296,28 @@
                 --border: #334155;
                 --primary: #60a5fa;
             }
+
+            .payment-overlay-card {
+                background: #1e293b;
+                color: #f1f5f9;
+            }
+
+            .payment-overlay-title { color: #f1f5f9; }
         }
     </style>
 </head>
 
 <body>
+    <!-- BUG 2 FIX: Processing overlay shown while we confirm subscription activation -->
+    <div class="payment-overlay" id="payment-overlay" role="alert" aria-live="polite">
+        <div class="payment-overlay-card">
+            <div class="spinner" id="overlay-spinner"></div>
+            <span class="payment-overlay-icon" id="overlay-icon" style="display:none"></span>
+            <p class="payment-overlay-title" id="overlay-title">Activating your plan…</p>
+            <p class="payment-overlay-msg"  id="overlay-msg">Please wait while we confirm your payment.</p>
+        </div>
+    </div>
+
     <div class="plans-wrapper">
         <a href="index.html" class="back-link">← Back to App</a>
 
@@ -299,13 +336,50 @@
             }
         })();
 
-        // ── Theme: apply saved theme so dark mode persists ────────────────────────
+        // ── Persist dark mode ─────────────────────────────────────────────────────
         (function () {
             const saved = localStorage.getItem('attendance_theme');
             if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
         })();
 
         const token = localStorage.getItem('token');
+
+        // ── Payment overlay helpers ───────────────────────────────────────────────
+        const overlay      = document.getElementById('payment-overlay');
+        const overlayIcon  = document.getElementById('overlay-icon');
+        const overlaySpinner = document.getElementById('overlay-spinner');
+        const overlayTitle = document.getElementById('overlay-title');
+        const overlayMsg   = document.getElementById('overlay-msg');
+
+        function showOverlay(icon, title, msg) {
+            if (icon) {
+                overlaySpinner.style.display = 'none';
+                overlayIcon.style.display    = 'block';
+                overlayIcon.textContent      = icon;
+            } else {
+                overlaySpinner.style.display = 'block';
+                overlayIcon.style.display    = 'none';
+            }
+            overlayTitle.textContent = title;
+            overlayMsg.textContent   = msg;
+            overlay.classList.add('visible');
+        }
+
+        function hideOverlay() {
+            overlay.classList.remove('visible');
+        }
+
+        // ── Set all upgrade buttons to loading / normal state ─────────────────────
+        function setButtonsDisabled(disabled) {
+            ['btn-monthly', 'btn-semester'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (!btn) return;
+                btn.disabled = disabled;
+                btn.textContent = disabled
+                    ? (id === 'btn-monthly' ? 'Processing…' : 'Processing…')
+                    : (id === 'btn-monthly' ? 'Upgrade to Monthly — ₹10' : 'Upgrade to Semester — ₹29');
+            });
+        }
 
         // ── Sign-out ──────────────────────────────────────────────────────────────
         document.getElementById('plans-signout-btn').addEventListener('click', () => {
@@ -327,22 +401,23 @@
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 sub = await res.json();
             } catch (err) {
-                container.innerHTML = `<p class="loading-txt" style="color:#dc2626">Failed to load subscription.<br>${err.message}</p>`;
+                container.innerHTML = `<p class="loading-txt" style="color:#dc2626">
+                    Failed to load subscription.<br>${err.message}</p>`;
                 return;
             }
 
             const isExpired = sub.status === 'expired' || sub.status === 'none' || !sub.plan;
-            const isTrial = sub.plan === 'trial';
-            const daysLeft = sub.days_remaining ?? 0;
+            const isTrial   = sub.plan === 'trial';
+            const daysLeft  = sub.days_remaining ?? 0;
 
-            // ── Format expiry date ──────────────────────────────────────────────
+            // Format expiry date
             let expiryStr = '—';
             if (sub.expiry_date) {
-                const d = new Date(sub.expiry_date);
-                expiryStr = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+                expiryStr = new Date(sub.expiry_date)
+                    .toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
             }
 
-            // ── Days remaining label ────────────────────────────────────────────
+            // Days remaining label
             let daysHtml = '';
             if (isExpired) {
                 daysHtml = `<div class="plan-days red">⛔ Subscription expired</div>`;
@@ -354,104 +429,167 @@
                 daysHtml = `<div class="plan-days ${cls}">✅ ${daysLeft} day${daysLeft !== 1 ? 's' : ''} remaining</div>`;
             }
 
-            // ── Alert banner ────────────────────────────────────────────────────
+            // Alert banner
             let alertHtml = '';
             if (isExpired) {
-                alertHtml = `<div class="alert-banner red">⚠️ Your trial has ended. Upgrade below to continue marking attendance and syncing your data.</div>`;
+                alertHtml = `<div class="alert-banner red">
+                    ⚠️ Your trial has ended. Upgrade below to continue marking attendance and syncing your data.
+                </div>`;
             } else if (isTrial) {
-                alertHtml = `<div class="alert-banner">💡 Your trial gives you full access. Upgrade now to keep your data after it ends.</div>`;
+                alertHtml = `<div class="alert-banner">
+                    💡 Your trial gives you full access. Upgrade now to keep your data after it ends.
+                </div>`;
             }
 
-            // ── Pill class ──────────────────────────────────────────────────────
             const pillClass = isExpired ? 'expired' : isTrial ? '' : 'active';
-            const planLabel = sub.plan ? (sub.plan.charAt(0).toUpperCase() + sub.plan.slice(1)) : 'None';
+            const planLabel = sub.plan
+                ? (sub.plan.charAt(0).toUpperCase() + sub.plan.slice(1))
+                : 'None';
 
             container.innerHTML = `
-            <!-- Current plan card -->
-            <div class="current-plan-card">
-                <h2>Your current plan</h2>
-                <div class="plan-row">
-                    <span class="plan-pill ${pillClass}">${planLabel}</span>
-                    <span class="plan-expiry">${isExpired ? 'Expired' : 'Expires'} <strong>${expiryStr}</strong></span>
-                </div>
-                ${daysHtml}
-            </div>
-
-            ${alertHtml}
-
-            <!-- Upgrade options -->
-            <div class="section-title">Upgrade your plan</div>
-            <div class="plan-cards">
-
-                <div class="plan-card" id="card-monthly">
-                    <div class="plan-card-title">Monthly</div>
-                    <div class="plan-card-price">₹10 <span style="font-size:1rem;font-weight:500;color:#64748b">/ month</span></div>
-                    <p class="plan-card-desc">Full access for 30 days.</p>
+                <!-- Current plan card -->
+                <div class="current-plan-card">
+                    <h2>Your current plan</h2>
+                    <div class="plan-row">
+                        <span class="plan-pill ${pillClass}">${planLabel}</span>
+                        <span class="plan-expiry">${isExpired ? 'Expired' : 'Expires'} <strong>${expiryStr}</strong></span>
+                    </div>
+                    ${daysHtml}
                 </div>
 
-                <div class="plan-card featured" id="card-semester">
-                    <div class="plan-card-badge">⭐ Best Value</div>
-                    <div class="plan-card-title">Semester</div>
-                    <div class="plan-card-price">₹29 <span style="font-size:1rem;font-weight:500;color:#64748b">/ 6 months</span></div>
-                    <p class="plan-card-desc">Full access for 180 days — save 52%.</p>
+                ${alertHtml}
+
+                <!-- Upgrade options -->
+                <div class="section-title">Upgrade your plan</div>
+                <div class="plan-cards">
+
+                    <div class="plan-card" id="card-monthly">
+                        <div class="plan-card-title">Monthly</div>
+                        <div class="plan-card-price">₹10 <span style="font-size:1rem;font-weight:500;color:#64748b">/ month</span></div>
+                        <p class="plan-card-desc">Full access for 30 days.</p>
+                    </div>
+
+                    <div class="plan-card featured" id="card-semester">
+                        <div class="plan-card-badge">⭐ Best Value</div>
+                        <div class="plan-card-title">Semester</div>
+                        <div class="plan-card-price">₹29 <span style="font-size:1rem;font-weight:500;color:#64748b">/ 6 months</span></div>
+                        <p class="plan-card-desc">Full access for 180 days — save 52%.</p>
+                    </div>
+
                 </div>
 
-            </div>
+                <button class="btn-upgrade primary"      id="btn-monthly">Upgrade to Monthly — ₹10</button>
+                <div style="height:10px"></div>
+                <button class="btn-upgrade primary-dark" id="btn-semester">Upgrade to Semester — ₹29</button>
+            `;
 
-            <button class="btn-upgrade primary" id="btn-monthly">Upgrade to Monthly — ₹10</button>
-            <div style="height:10px"></div>
-            <button class="btn-upgrade primary" id="btn-semester" style="background:#1d4ed8">Upgrade to Semester — ₹29</button>
-        `;
-
-            // ── Card → button wiring ────────────────────────────────────────────
-            document.getElementById('card-monthly').addEventListener('click', () => startUpgrade('monthly'));
+            // Wire cards and buttons
+            document.getElementById('card-monthly') .addEventListener('click', () => startUpgrade('monthly'));
             document.getElementById('card-semester').addEventListener('click', () => startUpgrade('semester'));
-            document.getElementById('btn-monthly').addEventListener('click', () => startUpgrade('monthly'));
-            document.getElementById('btn-semester').addEventListener('click', () => startUpgrade('semester'));
+            document.getElementById('btn-monthly')  .addEventListener('click', () => startUpgrade('monthly'));
+            document.getElementById('btn-semester') .addEventListener('click', () => startUpgrade('semester'));
+        }
+
+        // ── BUG 2 FIX: poll /api/subscription until plan is upgraded ─────────────
+        // Razorpay fires the handler callback BEFORE the webhook reaches the server.
+        // We poll to confirm the DB has actually been updated before redirecting.
+        async function waitForPlanActivation(expectedPlan, maxAttempts = 10, delayMs = 2000) {
+            for (let i = 0; i < maxAttempts; i++) {
+                await new Promise(r => setTimeout(r, delayMs));
+                try {
+                    const res = await fetch('/api/subscription', {
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    });
+                    if (!res.ok) continue;
+                    const sub = await res.json();
+                    if (sub.plan === expectedPlan && sub.status === 'active') {
+                        return true;
+                    }
+                } catch {
+                    // Network hiccup — keep polling
+                }
+            }
+            return false; // Timed out — webhook may have been delayed
         }
 
         // ── Razorpay payment flow ─────────────────────────────────────────────────
         async function startUpgrade(plan) {
+            // Guard: Razorpay SDK must be loaded (it's deferred)
+            if (typeof Razorpay === 'undefined') {
+                alert('Payment gateway is still loading. Please wait a moment and try again.');
+                return;
+            }
+
+            setButtonsDisabled(true);
+
+            // Step 1: Create order server-side
+            let order;
             try {
-                const r = await fetch('/api/create-order', {
+                const res = await fetch('/api/create-order', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type':  'application/json',
                         'Authorization': 'Bearer ' + token
                     },
                     body: JSON.stringify({ plan })
                 });
-                const order = await r.json();
-                if (!r.ok) throw new Error(order.error || 'Failed to create order');
-
-                if (typeof Razorpay === 'undefined') {
-                    alert('Payment gateway not loaded. Please refresh and try again.');
-                    return;
-                }
-
-                const rzp = new Razorpay({
-                    key: order.razorpay_key_id || '',
-                    amount: order.amount,
-                    currency: order.currency,
-                    name: 'Attendance App',
-                    description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`,
-                    order_id: order.order_id,
-                    handler: function () {
-                        alert('✅ Payment successful! Your plan has been upgraded.');
-                        window.location.href = 'index.html';
-                    },
-                    modal: {
-                        ondismiss: function () {
-                            console.log('[plans] Payment dismissed');
-                        }
-                    },
-                    theme: { color: '#2563EB' }
-                });
-                rzp.open();
-
+                order = await res.json();
+                if (!res.ok) throw new Error(order.error || 'Failed to create order');
             } catch (err) {
+                setButtonsDisabled(false);
                 alert('Could not initiate payment: ' + err.message);
+                return;
             }
+
+            // Step 2: Open Razorpay modal
+            const planLabel = plan.charAt(0).toUpperCase() + plan.slice(1);
+
+            const rzp = new Razorpay({
+                key:         order.razorpay_key_id, // BUG 1 is now fixed — this will have the real key
+                amount:      order.amount,
+                currency:    order.currency,
+                name:        'Attendance App',
+                description: `${planLabel} Plan`,
+                order_id:    order.order_id,
+                theme:       { color: '#2563EB' },
+
+                // BUG 2 FIX: Don't blindly redirect — wait for webhook to confirm
+                handler: async function (response) {
+                    // response.razorpay_payment_id / order_id / signature are available
+                    // but we rely on the webhook for DB updates (server-side HMAC verified)
+                    showOverlay(null, 'Activating your plan…', 'Payment received. Confirming with server…');
+
+                    const activated = await waitForPlanActivation(plan);
+
+                    if (activated) {
+                        showOverlay('✅', 'Plan Activated!', `Your ${planLabel} plan is now active. Redirecting…`);
+                        setTimeout(() => {
+                            hideOverlay();
+                            window.location.href = 'index.html';
+                        }, 1800);
+                    } else {
+                        // Webhook may be delayed — inform user but don't lose them
+                        showOverlay(
+                            '⏳',
+                            'Payment Received',
+                            'Your payment was successful. Your plan will activate within a minute. Redirecting…'
+                        );
+                        setTimeout(() => {
+                            hideOverlay();
+                            window.location.href = 'index.html';
+                        }, 3000);
+                    }
+                },
+
+                // BUG 4 FIX: removed console.log from ondismiss
+                modal: {
+                    ondismiss: function () {
+                        setButtonsDisabled(false);
+                    }
+                }
+            });
+
+            rzp.open();
         }
 
         // ── Bootstrap ─────────────────────────────────────────────────────────────

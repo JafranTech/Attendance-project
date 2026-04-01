@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "Serverless backend for Attendance PWA SaaS",
     "scripts": {
-        "dev": "vercel dev",
+        "dev": "node node_modules/vercel/dist/index.js dev",
         "deploy": "vercel --prod"
     },
     "dependencies": {
