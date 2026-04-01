@@ -1,5 +1,10 @@
 {
     "version": 2,
+    "env": {
+        "RAZORPAY_KEY_ID": "rzp_test_SYIOQz6Wj0pHf9",
+        "RAZORPAY_KEY_SECRET": "KAFAd7b1sxp6P6Fbx3328AFO",
+        "RAZORPAY_WEBHOOK_SECRET": "TestAppSecret123"
+    },
     "functions": {
         "api/register.js": {
             "memory": 128,
