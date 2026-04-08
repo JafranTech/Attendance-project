@@ -382,8 +382,20 @@ async function init() {
     // ── Step 1: Hydrate localStorage from server — ALWAYS overwrite ──────────
     // Server is the single source of truth (like FB, ChatGPT).
     // Every device must receive and apply the server config on every app load.
-    // Do NOT skip if key already exists — that caused the cross-device mismatch bug.
     try {
+        const token = localStorage.getItem('token');
+        if (token) {
+            const meRes = await fetch('/api/me', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (meRes.ok) {
+                const meData = await meRes.json();
+                if (meData.user) {
+                    localStorage.setItem('user', JSON.stringify(meData.user));
+                }
+            }
+        }
+        
         const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
         if (storedUser.id) {
             const deptKey = `attendance_department_${storedUser.id}`;
