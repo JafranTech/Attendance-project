@@ -24,6 +24,10 @@
         "api/subscription.js": {
             "memory": 128,
             "maxDuration": 10
+        },
+        "api/sync-config.js": {
+            "memory": 128,
+            "maxDuration": 10
         }
     },
     "routes": [

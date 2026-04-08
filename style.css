@@ -433,6 +433,68 @@ body {
     margin-left: auto;
 }
 
+/* Profile Chip (top-right header — shows name + sub days) */
+.profile-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px 4px 4px;
+    border-radius: 999px;
+    border: 1.5px solid var(--border);
+    background: var(--card-bg);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    max-width: 160px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.profile-chip:hover {
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px rgba(37,99,235,0.12);
+}
+
+.chip-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary) 0%, #7C3AED 100%);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    letter-spacing: 0.02em;
+}
+
+.chip-info {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    text-align: left;
+    min-width: 0;
+}
+
+.chip-name {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+.chip-sub {
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: #f59e0b;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+/* Legacy .profile-trigger (fallback) */
 .profile-trigger {
     width: 36px;
     height: 36px;

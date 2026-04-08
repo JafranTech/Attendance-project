@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS public.users (
   name        TEXT NOT NULL,
   email       TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
+  department  TEXT,
+  config      JSONB,
   created_at  TIMESTAMPTZ DEFAULT NOW()
 );
 

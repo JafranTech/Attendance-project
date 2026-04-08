@@ -301,6 +301,14 @@
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('user', JSON.stringify(data.user));
 
+                // Restore synced config from other devices
+                if (data.user.department) {
+                    localStorage.setItem(`attendance_department_${data.user.id}`, data.user.department);
+                }
+                if (data.user.config) {
+                    localStorage.setItem(`attendance_config_${data.user.id}`, JSON.stringify(data.user.config));
+                }
+
                 // Redirect to main app
                 window.location.replace('index.html');
 

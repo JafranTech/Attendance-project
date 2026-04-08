@@ -241,8 +241,13 @@
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                         </svg>
                     </button>
-                    <button id="profile-trigger" class="profile-trigger">
-                        <!-- Injected via JS -->
+                    <!-- Profile chip: shows user name + sub days — injected/updated by JS -->
+                    <button id="profile-trigger" class="profile-chip" aria-label="Profile">
+                        <div id="profile-chip-avatar" class="chip-avatar">U</div>
+                        <div class="chip-info">
+                            <span id="chip-name" class="chip-name">Loading…</span>
+                            <span id="chip-sub" class="chip-sub"></span>
+                        </div>
                     </button>
                 </div>
             </div>

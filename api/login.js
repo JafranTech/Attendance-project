@@ -29,7 +29,7 @@ module.exports = async function handler(req, res) {
         const supabase = getClient();
         const { data: user, error: userError } = await supabase
             .from('users')
-            .select('id, email, password_hash, name')
+            .select('id, email, password_hash, name, department, config')
             .eq('email', email)
             .single();
 
@@ -78,7 +78,13 @@ module.exports = async function handler(req, res) {
 
         return res.status(200).json({
             token,
-            user: { id: user.id, name: user.name, email: user.email },
+            user: { 
+                id: user.id, 
+                name: user.name, 
+                email: user.email,
+                department: user.department,
+                config: user.config
+            },
         });
 
     } catch (err) {

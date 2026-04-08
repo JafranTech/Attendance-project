@@ -23,6 +23,7 @@ function CONFIG_KEY() { return getUserScopedKey('attendance_config'); }
 function HOLIDAYS_KEY() { return getUserScopedKey('attendance_holidays'); }
 function NOTES_KEY_FN() { return getUserScopedKey('attendance_notes'); }
 function SATURDAY_KEY_FN() { return getUserScopedKey('attendance_saturday_map'); }
+function DEPARTMENT_KEY() { return getUserScopedKey('attendance_department'); }
 const PROFILE_KEY = 'attendance_profile'; // profile is device-level, not sensitive
 const THEME_KEY = 'attendance_theme';
 const ACADEMIC_START = new Date('2026-01-05T00:00:00');
@@ -257,9 +258,10 @@ let selectedHistorySubject = null; // State for drilldown
 
 // --- Subscription Enforcement ---
 
+// Returns { allowed: bool, days_remaining: number, plan: string } for profile chip
 async function checkSubscriptionStatus() {
     const token = localStorage.getItem('token');
-    if (!token) return; // auth guard already redirects
+    if (!token) return { allowed: false, days_remaining: 0, plan: null };
 
     try {
         const res = await fetch('/api/subscription', {
@@ -269,7 +271,7 @@ async function checkSubscriptionStatus() {
 
         if (data.status === 'expired' || data.status === 'none') {
             showSubscriptionLock(data);
-            return false; // blocked
+            return { allowed: false, days_remaining: 0, plan: data.plan };
         }
 
         // Active — inject plan badge into header
@@ -279,17 +281,16 @@ async function checkSubscriptionStatus() {
             const days = data.days_remaining || 0;
 
             if (plan === 'trial') {
-                badge.textContent = `🎯 Trial – ${days} day${days !== 1 ? 's' : ''} left`;
+                badge.textContent = `🎯 Trial – ${days}d left`;
                 badge.className = 'plan-badge badge-trial';
             } else if (plan === 'monthly') {
-                badge.textContent = `✅ Monthly`;
+                badge.textContent = `✅ Monthly – ${days}d`;
                 badge.className = 'plan-badge badge-active';
             } else if (plan === 'semester') {
-                badge.textContent = `✅ Semester`;
+                badge.textContent = `✅ Semester – ${days}d`;
                 badge.className = 'plan-badge badge-active';
             }
             badge.classList.remove('hidden');
-            // Make badge clickable → navigate to plans page
             badge.style.cursor = 'pointer';
             badge.title = 'View your plan';
             badge.addEventListener('click', () => {
@@ -297,10 +298,10 @@ async function checkSubscriptionStatus() {
             });
         }
 
-        return true; // allowed
+        return { allowed: true, days_remaining: data.days_remaining || 0, plan: data.plan };
     } catch (err) {
         console.warn('[subscription] Check failed (offline?):', err.message);
-        return true; // allow offline usage gracefully
+        return { allowed: true, days_remaining: null, plan: null }; // allow offline usage gracefully
     }
 }
 
@@ -323,7 +324,8 @@ function showSubscriptionLock(data) {
     const logoutBtn = document.getElementById('lock-logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
-            localStorage.clear();
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
             window.location.replace('login.html');
         });
     }
@@ -377,16 +379,52 @@ function showSubscriptionLock(data) {
 
 // --- Initialization ---
 async function init() {
-    // ── Subscription check first ───────────────────────────────────────────
-    const allowed = await checkSubscriptionStatus();
-    if (allowed === false) return; // lock screen shown, stop init
+    // ── Step 1: Hydrate localStorage from server — ALWAYS overwrite ──────────
+    // Server is the single source of truth (like FB, ChatGPT).
+    // Every device must receive and apply the server config on every app load.
+    // Do NOT skip if key already exists — that caused the cross-device mismatch bug.
+    try {
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        if (storedUser.id) {
+            const deptKey = `attendance_department_${storedUser.id}`;
+            const configKey = `attendance_config_${storedUser.id}`;
 
+            if (storedUser.department) {
+                const localDept = localStorage.getItem(deptKey);
+                // If server says different department than what's cached locally,
+                // clear the stale local config so setup re-runs for the correct dept.
+                if (localDept && localDept !== storedUser.department) {
+                    console.warn(`[init] Department mismatch: local="${localDept}" server="${storedUser.department}". Resetting to server config.`);
+                    localStorage.removeItem(configKey); // stale config must go
+                }
+                // Always write the server department — no condition
+                localStorage.setItem(deptKey, storedUser.department);
+            }
+
+            if (storedUser.config) {
+                const configValue = typeof storedUser.config === 'string'
+                    ? storedUser.config
+                    : JSON.stringify(storedUser.config);
+                // Always write the server config
+                localStorage.setItem(configKey, configValue);
+            }
+        }
+    } catch (e) {
+        console.warn('[init] Failed to hydrate config from user object:', e);
+    }
+
+    // ── Step 2: Load local data (now hydrated from server) ────────────────
     loadData();
     loadTheme();
-    // Always render profile UI regardless of config state
-    renderProfileUI();
 
-    // ── Inject logout button into header ──────────────────────────────────
+    // ── Step 3: Subscription check ────────────────────────────────────────
+    const subResult = await checkSubscriptionStatus();
+    if (subResult.allowed === false) return; // lock screen shown, stop init
+
+    // ── Step 4: Render profile chip with real account name + sub info ─────
+    renderProfileUI(subResult);
+
+    // ── Step 5: Inject logout button into header ──────────────────────────
     if (headerRight && !document.getElementById('logout-btn')) {
         const logoutBtn = document.createElement('button');
         logoutBtn.id = 'logout-btn';
@@ -396,14 +434,15 @@ async function init() {
         logoutBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`;
         logoutBtn.addEventListener('click', () => {
             if (confirm('Are you sure you want to log out?')) {
-                localStorage.clear(); // wipe all user-state (token, config, attendance cache, notes, etc.)
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
                 window.location.replace('login.html');
             }
         });
-        // Insert before the first child so it's leftmost in header-right
         headerRight.insertBefore(logoutBtn, headerRight.firstChild);
     }
 
+    // ── Step 6: Show app or setup screen ──────────────────────────────────
     if (userConfig) {
         await loadAttendanceFromApi();
         showApp();
@@ -414,7 +453,16 @@ async function init() {
 
 
 function checkDepartment() {
-    const dept = localStorage.getItem('department');
+    let dept = localStorage.getItem(DEPARTMENT_KEY());
+    if (!dept) {
+        const oldDept = localStorage.getItem('department');
+        if (oldDept) {
+            dept = oldDept;
+            localStorage.setItem(DEPARTMENT_KEY(), dept);
+            // intentionally left old department for backward compatibility on this device
+        }
+    }
+
     if (!dept) {
         showDeptSelection();
     } else if (dept === 'BIO') {
@@ -428,7 +476,7 @@ function checkDepartment() {
             showSetup();
         } else {
             // Invalid dept key found? Reset and show selection
-            localStorage.removeItem('department');
+            localStorage.removeItem(DEPARTMENT_KEY());
             showDeptSelection();
         }
     }
@@ -439,12 +487,14 @@ function loadData() {
     const config = localStorage.getItem(configKey);
     if (config) {
         userConfig = JSON.parse(config);
-        // Safety check: reset if old config schema
-        if (userConfig.it_elective || !userConfig.it_elective_a || !userConfig.it_elective_b) {
-            console.log('[loadData] Migrating config for new elective schema');
-            userConfig = null;
-            localStorage.removeItem(configKey);
-            localStorage.removeItem('department');
+        // Safety check: reset if old IT config schema, but ignore this for BIO department
+        if (userConfig.dept === 'IT' || !userConfig.dept) {
+            if (userConfig.it_elective || !userConfig.it_elective_a || !userConfig.it_elective_b) {
+                console.log('[loadData] Migrating config for new IT elective schema');
+                userConfig = null;
+                localStorage.removeItem(configKey);
+                localStorage.removeItem(DEPARTMENT_KEY());
+            }
         }
     }
 
@@ -584,13 +634,46 @@ function showHistory(subject = null) {
 
 
 
-// --- Setup Form Handlers ---
+// --- Config Sync Function ---
+// Syncs department+config to server AND patches the local 'user' object
+// so that on next page reload, init() hydration finds the correct values
+// without needing a fresh login. This is how FB/ChatGPT work.
+async function syncConfigToServer(department, config) {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    // ── Immediately patch user in localStorage (source of truth for hydration) ──
+    try {
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        if (department !== null) storedUser.department = department;
+        if (config !== null) storedUser.config = config;
+        localStorage.setItem('user', JSON.stringify(storedUser));
+    } catch (e) {
+        console.warn('[syncConfig] Could not patch user in localStorage:', e);
+    }
+
+    // ── Persist to server in background ──────────────────────────────────────
+    try {
+        await fetch('/api/sync-config', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ department, config })
+        });
+    } catch (e) {
+        console.warn('[syncConfig] Server sync failed (offline?):', e);
+    }
+}
+
 // --- Setup Form Handlers ---
 deptForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const formData = new FormData(deptForm);
     const dept = formData.get('dept');
-    localStorage.setItem('department', dept);
+    localStorage.setItem(DEPARTMENT_KEY(), dept);
+    syncConfigToServer(dept, null);
     checkDepartment();
 });
 
@@ -604,9 +687,11 @@ setupForm.addEventListener('submit', (e) => {
         ssdx_elective: formData.get('ssdx_elective'),
         batch: formData.get('batch')
     };
-    localStorage.setItem('department', 'IT');
+    localStorage.setItem(DEPARTMENT_KEY(), 'IT');
     localStorage.setItem(CONFIG_KEY(), JSON.stringify(userConfig));
+    syncConfigToServer('IT', userConfig);
     showApp();
+    checkSubscriptionStatus().then(res => renderProfileUI(res));
 });
 
 setupBioForm.addEventListener('submit', (e) => {
@@ -619,15 +704,17 @@ setupBioForm.addEventListener('submit', (e) => {
         chem_elective: formData.get('chem_elective'),
         batch: formData.get('batch')
     };
-    localStorage.setItem('department', 'BIO');
+    localStorage.setItem(DEPARTMENT_KEY(), 'BIO');
     localStorage.setItem(CONFIG_KEY(), JSON.stringify(userConfig));
+    syncConfigToServer('BIO', userConfig);
     showApp();
+    checkSubscriptionStatus().then(res => renderProfileUI(res));
 });
 
 resetBtn.addEventListener('click', () => {
     if (confirm("Are you sure you want to reset your setup? This won't delete attendance data.")) {
         localStorage.removeItem(CONFIG_KEY());
-        localStorage.removeItem('department');
+        localStorage.removeItem(DEPARTMENT_KEY());
         userConfig = null;
         location.reload();
     }
@@ -748,20 +835,48 @@ function saveProfile() {
     closeProfile();
 }
 
-function renderProfileUI() {
-    // Header Avatar
-    const avatarSrc = profileData.avatar;
-    const initial = profileData.name ? profileData.name.charAt(0).toUpperCase() : 'U';
+function renderProfileUI(subResult) {
+    // Get real account name from registered user (server-side)
+    let accountName = 'User';
+    try {
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        accountName = storedUser.name || profileData.name || 'User';
+    } catch (e) { /* ignore */ }
 
-    // Helper to generate Avatar HTML
-    const getAvatarHTML = (src, size) => {
+    const initial = accountName.charAt(0).toUpperCase();
+
+    // Update profile chip in header
+    const chipAvatar = document.getElementById('profile-chip-avatar');
+    const chipName = document.getElementById('chip-name');
+    const chipSub = document.getElementById('chip-sub');
+
+    if (chipAvatar) chipAvatar.textContent = initial;
+    if (chipName) chipName.textContent = accountName;
+    if (chipSub && subResult) {
+        if (subResult.days_remaining !== null) {
+            const days = subResult.days_remaining;
+            const plan = subResult.plan || 'trial';
+            if (plan === 'trial') {
+                chipSub.textContent = `Trial · ${days}d left`;
+                chipSub.style.color = days <= 1 ? '#ef4444' : '#f59e0b';
+            } else {
+                chipSub.textContent = `${plan.charAt(0).toUpperCase() + plan.slice(1)} · ${days}d`;
+                chipSub.style.color = '#22c55e';
+            }
+        } else {
+            chipSub.textContent = 'Offline';
+        }
+    }
+
+    // Also update avatar in drawer preview
+    const avatarSrc = profileData.avatar;
+    const getAvatarHTML = (src) => {
         if (src && src.startsWith('data:image')) {
             return `<img src="${src}" alt="Profile">`;
         }
-        return `<div class="default-avatar" style="font-size: ${size === 'large' ? '2rem' : '1rem'}">${initial}</div>`;
+        return `<div class="default-avatar" style="font-size: 1rem">${initial}</div>`;
     };
-
-    profileTrigger.innerHTML = getAvatarHTML(avatarSrc, 'small');
+    // Trigger element was updated with chip HTML in index.html — no innerHTML needed
 }
 
 function renderAvatarPreview(src) {
