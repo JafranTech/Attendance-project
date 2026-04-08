@@ -40,12 +40,13 @@ module.exports = async function handler(req, res) {
     // ── Create Razorpay order ──────────────────────────────────────────────────
     try {
         const { amount, currency, days } = PLANS[plan];
+        console.log(`[create-order] Initializing Razorpay. Key ID len: ${keyId.length}, Secret len: ${keySecret.length}`);
         const razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
 
         const order = await razorpay.orders.create({
             amount,
             currency,
-            receipt: `rcpt_${req.user_id}_${Date.now()}`,
+            receipt: `rcpt_${String(req.user_id).slice(0, 8)}_${Date.now()}`,
             notes: {
                 user_id: String(req.user_id),
                 plan,
@@ -64,7 +65,10 @@ module.exports = async function handler(req, res) {
         });
 
     } catch (err) {
-        console.error('[create-order] Razorpay API error:', err.message);
-        return res.status(500).json({ error: 'Failed to create payment order', detail: err.message });
+        console.error('[create-order] Razorpay API error details:', err);
+        return res.status(500).json({
+            error: 'Failed to create payment order',
+            detail: err.error ? err.error.description : err.message || err.toString()
+        });
     }
 };
