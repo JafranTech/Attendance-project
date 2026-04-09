@@ -28,6 +28,14 @@
         "api/sync-config.js": {
             "memory": 128,
             "maxDuration": 10
+        },
+        "api/verify-payment.js": {
+            "memory": 128,
+            "maxDuration": 10
+        },
+        "api/me.js": {
+            "memory": 128,
+            "maxDuration": 10
         }
     },
     "routes": [

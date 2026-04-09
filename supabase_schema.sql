@@ -1,6 +1,7 @@
 -- ============================================================
 -- Attendance SaaS - Supabase PostgreSQL Schema
 -- Run this in Supabase SQL Editor to set up all required tables
+-- Last updated: Production readiness audit fixes applied
 -- ============================================================
 
 -- Users table
@@ -21,7 +22,7 @@ CREATE TABLE IF NOT EXISTS public.subscriptions (
   user_id              UUID NOT NULL UNIQUE REFERENCES public.users(id) ON DELETE CASCADE,
   plan                 TEXT NOT NULL CHECK (plan IN ('trial', 'monthly', 'semester')),
   expiry_date          TIMESTAMPTZ NOT NULL,
-  razorpay_payment_id  TEXT,
+  razorpay_payment_id  TEXT UNIQUE,   -- UNIQUE: prevents duplicate webhook retries from double-extending
   created_at           TIMESTAMPTZ DEFAULT NOW(),
   updated_at           TIMESTAMPTZ DEFAULT NOW()
 );
@@ -39,10 +40,29 @@ CREATE TABLE IF NOT EXISTS public.attendance (
   UNIQUE (user_id, subject, date)
 );
 
+-- Payment Transactions audit table
+-- Every webhook event (success AND failure) is logged here permanently.
+-- This makes Vercel function logs irrelevant for payment dispute resolution.
+CREATE TABLE IF NOT EXISTS public.payment_transactions (
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id              TEXT NOT NULL,                    -- TEXT to tolerate edge cases (notes parsing)
+  razorpay_order_id    TEXT,
+  razorpay_payment_id  TEXT,
+  amount               BIGINT,                           -- in paise (1 INR = 100 paise)
+  currency             TEXT DEFAULT 'INR',
+  plan                 TEXT,
+  status               TEXT NOT NULL,                   -- 'success' | 'duplicate' | 'db_error' | 'bad_payload'
+  raw_payload          JSONB,                            -- full Razorpay event body for audit
+  created_at           TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ── Indexes ──────────────────────────────────────────────────────────────────
-CREATE INDEX IF NOT EXISTS idx_attendance_user_id ON public.attendance(user_id);
-CREATE INDEX IF NOT EXISTS idx_attendance_date    ON public.attendance(date);
-CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON public.subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_attendance_user_id             ON public.attendance(user_id);
+CREATE INDEX IF NOT EXISTS idx_attendance_date                ON public.attendance(date);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_user            ON public.subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_payment  ON public.payment_transactions(razorpay_payment_id);
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_user     ON public.payment_transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_order    ON public.payment_transactions(razorpay_order_id);
 
 -- ── Auto-update updated_at ────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -63,11 +83,15 @@ CREATE TRIGGER set_attendance_updated_at
   BEFORE UPDATE ON public.attendance
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- ── Row Level Security (optional but recommended) ─────────────────────────────
--- Disable RLS for server-side service role access (service role bypasses RLS anyway)
-ALTER TABLE public.users         ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.attendance    ENABLE ROW LEVEL SECURITY;
+-- ── Row Level Security ────────────────────────────────────────────────────────
+-- Service role key (used by backend) bypasses RLS automatically.
+-- RLS protects against accidental direct client access.
+ALTER TABLE public.users                ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.subscriptions        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.attendance           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.payment_transactions ENABLE ROW LEVEL SECURITY;
 
--- Note: Since the backend uses the service role key, it bypasses RLS.
--- These policies protect against direct client access.
+-- ── Unique constraint on razorpay_payment_id (applied via migration) ──────────
+-- ALTER TABLE public.subscriptions
+--   ADD CONSTRAINT subscriptions_razorpay_payment_id_unique UNIQUE (razorpay_payment_id);
+-- Already applied via Supabase MCP migration: add_unique_payment_id_and_transactions_table

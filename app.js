@@ -333,7 +333,48 @@ function showSubscriptionLock(data) {
     // Upgrade buttons — initiate Razorpay payment
     const token = localStorage.getItem('token');
 
+    // ── Polling helper: same pattern as plans.html ────────────────────────────
+    // Razorpay fires the frontend handler callback BEFORE the webhook reaches
+    // the server and updates the DB. We poll to confirm the DB has been updated
+    // before showing success and reloading — prevents false success screens.
+    async function waitForPlanActivation(expectedPlan, maxAttempts = 10, delayMs = 2000) {
+        for (let i = 0; i < maxAttempts; i++) {
+            await new Promise(r => setTimeout(r, delayMs));
+            try {
+                const res = await fetch('/api/subscription', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (!res.ok) continue;
+                const sub = await res.json();
+                if (sub.plan === expectedPlan && sub.status === 'active') return true;
+            } catch {
+                // Network hiccup — keep polling
+            }
+        }
+        return false; // Timed out — webhook may have been delayed
+    }
+
+    // ── Lock overlay spinner helpers ──────────────────────────────────────────
+    function showLockSpinner(msg) {
+        const el = document.getElementById('lock-payment-status');
+        if (!el) return;
+        el.textContent = msg;
+        el.style.display = 'block';
+    }
+    function hideLockSpinner() {
+        const el = document.getElementById('lock-payment-status');
+        if (el) el.style.display = 'none';
+    }
+
     async function startUpgrade(plan) {
+        const planLabel = plan.charAt(0).toUpperCase() + plan.slice(1);
+
+        if (typeof Razorpay === 'undefined') {
+            alert('Payment gateway not loaded. Please refresh and try again.');
+            return;
+        }
+
+        let order;
         try {
             const r = await fetch('/api/create-order', {
                 method: 'POST',
@@ -343,32 +384,60 @@ function showSubscriptionLock(data) {
                 },
                 body: JSON.stringify({ plan })
             });
-            const order = await r.json();
+            order = await r.json();
             if (!r.ok) throw new Error(order.error || 'Failed to create order');
-
-            if (typeof Razorpay === 'undefined') {
-                alert('Payment gateway not loaded. Please refresh and try again.');
-                return;
-            }
-
-            const rzp = new Razorpay({
-                key: order.razorpay_key_id || '',
-                amount: order.amount,
-                currency: order.currency,
-                name: 'Attendance App',
-                description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`,
-                order_id: order.order_id,
-                handler: function () {
-                    overlay.classList.add('hidden');
-                    alert('Payment successful! Your plan has been upgraded.');
-                    window.location.reload();
-                },
-                theme: { color: '#2563EB' }
-            });
-            rzp.open();
         } catch (err) {
             alert('Could not initiate payment: ' + err.message);
+            return;
         }
+
+        const rzp = new Razorpay({
+            key:         order.razorpay_key_id || '',
+            amount:      order.amount,
+            currency:    order.currency,
+            name:        'Attendance App',
+            description: `${planLabel} Plan`,
+            order_id:    order.order_id,
+            theme:       { color: '#2563EB' },
+
+            // ── SECURITY FIX: do NOT trust the frontend callback alone. ──────
+            // Poll the server until the webhook has confirmed the DB update.
+            handler: async function (_response) {
+                // Hide buttons; show waiting message
+                [document.getElementById('upgrade-monthly-btn'),
+                 document.getElementById('upgrade-semester-btn')]
+                    .filter(Boolean)
+                    .forEach(b => { b.disabled = true; });
+
+                showLockSpinner('⏳ Payment received. Activating your plan…');
+
+                const activated = await waitForPlanActivation(plan);
+
+                if (activated) {
+                    showLockSpinner('✅ Plan activated! Reloading…');
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    // Webhook may be delayed — inform user, reload anyway
+                    // (the subscription check on reload will reflect the real state)
+                    showLockSpinner(
+                        '✅ Payment received! Your plan is activating and will ' +
+                        'be ready within a minute. Reloading…'
+                    );
+                    setTimeout(() => window.location.reload(), 3000);
+                }
+            },
+
+            modal: {
+                ondismiss: function () {
+                    hideLockSpinner();
+                    [document.getElementById('upgrade-monthly-btn'),
+                     document.getElementById('upgrade-semester-btn')]
+                        .filter(Boolean)
+                        .forEach(b => { b.disabled = false; });
+                }
+            }
+        });
+        rzp.open();
     }
 
     const monthlyBtn = document.getElementById('upgrade-monthly-btn');
