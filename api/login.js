@@ -44,29 +44,33 @@ module.exports = async function handler(req, res) {
         }
 
         // ── Create trial subscription on FIRST login only ─────────────────────
-        // Uses ON CONFLICT DO NOTHING to handle race conditions safely.
-        // If a subscription row already exists for this user, nothing changes.
+        // Only inserts if no subscription row exists for this user yet.
+        // Uses maybeSingle check first to avoid triggering UNIQUE violation
+        // on user_id which shows up as 409 in Supabase logs.
         const now = new Date();
         const trialExpiry = new Date(now.getTime() + 24 * 60 * 60 * 1000); // exactly 24 hours
 
-        const { error: subError } = await supabase
+        const { data: existingSub } = await supabase
             .from('subscriptions')
-            .insert({
-                user_id: user.id,
-                plan: 'trial',
-                start_date: now.toISOString(),
-                expiry_date: trialExpiry.toISOString(),
-                status: 'active',
-            })
-            .select()
-            // Supabase JS v2: to ignore duplicate key, check error code
-            // ON CONFLICT is handled by catching the unique violation below
-            ;
+            .select('id')
+            .eq('user_id', user.id)
+            .maybeSingle();
 
-        // Unique violation on user_id = subscription already exists — this is expected
-        if (subError && subError.code !== '23505') {
-            console.error('[login] Subscription insert error:', subError);
-            // Non-fatal: trial creation failed but login can still proceed
+        if (!existingSub) {
+            const { error: subError } = await supabase
+                .from('subscriptions')
+                .insert({
+                    user_id:     user.id,
+                    plan:        'trial',
+                    expiry_date: trialExpiry.toISOString(),
+                    // razorpay_payment_id intentionally omitted (NULL for trials)
+                });
+
+            if (subError && subError.code !== '23505') {
+                // 23505 = unique violation = race condition with another login, safe to ignore
+                console.error('[login] Trial subscription insert error:', subError.message);
+                // Non-fatal: login succeeds even if trial creation fails
+            }
         }
 
         // ── Sign JWT ──────────────────────────────────────────────────────────
