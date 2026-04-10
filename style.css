@@ -1420,4 +1420,97 @@ body.dark-mode .manual-day-section.has-subjects {
 body.dark-mode .modal-content {
     background: var(--card-bg);
     color: var(--text-main);
-}
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESET TIMETABLE MODAL + DANGER BUTTON
+═══════════════════════════════════════════════════════════════ */
+
+/* Danger (destructive) button */
+.btn-danger {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: center;
+    border: none;
+    background: var(--danger);
+    color: #fff;
+    transition: opacity 0.2s, transform 0.1s;
+    margin-top: 0;
+}
+
+.btn-danger:hover  { opacity: 0.88; }
+.btn-danger:active { transform: scale(0.98); }
+.btn-danger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Reset Timetable modal specifics */
+.reset-tt-modal-content {
+    text-align: left;
+    max-width: 360px;
+    width: 92%;
+}
+
+.reset-tt-modal-content h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text-main);
+}
+
+.reset-tt-desc {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.reset-tt-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* "Change Timetable" row in Profile Drawer — danger-tinted */
+.profile-action-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    background: none;
+    width: 100%;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: background 0.15s, border-color 0.15s;
+    margin-top: 12px;
+    text-align: left;
+}
+
+.profile-action-row.danger {
+    color: var(--danger);
+    border-color: #FECACA;
+}
+
+.profile-action-row.danger:hover {
+    background: #FEF2F2;
+    border-color: var(--danger);
+}
+
+body.dark-mode .profile-action-row.danger:hover {
+    background: #2D1515;
+}
+
+body.dark-mode .reset-tt-modal-content h3 {
+    color: var(--text-main);
+}
+

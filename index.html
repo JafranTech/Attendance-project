@@ -43,7 +43,7 @@
                         </label>
                         <label class="radio-card">
                             <input type="radio" name="dept" value="MANUAL" required>
-                            <span>✏️ Manual Timetable <small style="display:block;font-weight:400;font-size:0.8rem;color:var(--text-secondary)">My department isn't listed</small></span>
+                            <span>Manual Timetable <small style="display:block;font-weight:400;font-size:0.8rem;color:var(--text-secondary)">My department isn't listed</small></span>
                         </label>
                     </div>
                 </div>
@@ -479,6 +479,25 @@
             <button class="lock-logout-btn" id="lock-logout-btn">
                 Sign out &rarr;
             </button>
+        </div>
+    </div>
+
+    <!-- ─── Reset Timetable Modal ──────────────────────────────────────────── -->
+    <div id="reset-timetable-modal" class="modal-overlay hidden">
+        <div class="modal-content reset-tt-modal-content">
+            <h3>Reset Timetable</h3>
+            <p class="reset-tt-desc">This will remove your current timetable setup.<br>Your subscription will not be affected.</p>
+
+            <div class="form-group" style="margin-top:16px;">
+                <label for="reset-password-input">Password</label>
+                <input type="password" id="reset-password-input" class="drawer-input" placeholder="Enter your account password" autocomplete="current-password">
+                <span class="field-error hidden" id="err-reset-password">Incorrect password. Please try again.</span>
+            </div>
+
+            <div class="reset-tt-actions">
+                <button id="reset-tt-cancel-btn" class="btn-secondary" style="flex:1;">Cancel</button>
+                <button id="reset-tt-confirm-btn" class="btn-danger" style="flex:1;">Confirm Reset</button>
+            </div>
         </div>
     </div>
 

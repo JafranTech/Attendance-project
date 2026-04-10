@@ -968,6 +968,24 @@ function renderProfileUI(subResult) {
         return `<div class="default-avatar" style="font-size: 1rem">${initial}</div>`;
     };
     // Trigger element was updated with chip HTML in index.html — no innerHTML needed
+
+    // ── Inject "Change Timetable" button into Profile Drawer ──────────────
+    // Idempotent: remove any existing instance before re-injecting
+    const existingChangeTTBtn = document.getElementById('change-timetable-btn');
+    if (existingChangeTTBtn) existingChangeTTBtn.remove();
+
+    const drawerContent = document.querySelector('#profile-drawer .drawer-content');
+    if (drawerContent) {
+        const changeTTBtn = document.createElement('button');
+        changeTTBtn.id = 'change-timetable-btn';
+        changeTTBtn.className = 'profile-action-row danger';
+        changeTTBtn.innerHTML = '🔄 Change Timetable';
+        changeTTBtn.addEventListener('click', () => {
+            closeProfile();
+            setTimeout(() => openResetTimetableModal(), 300);
+        });
+        drawerContent.appendChild(changeTTBtn);
+    }
 }
 
 function renderAvatarPreview(src) {
@@ -1762,7 +1780,16 @@ function openAddSubjectModal(day) {
     const errName   = document.getElementById('err-modal-name');
 
     if (label)     label.textContent = day;
-    if (codeInput) { codeInput.value = ''; errCode && errCode.classList.add('hidden'); }
+    if (codeInput) {
+        codeInput.value = '';
+        errCode && errCode.classList.add('hidden');
+        // Feature 3: Uppercase live as user types / pastes
+        codeInput.oninput = () => {
+            const pos = codeInput.selectionStart;
+            codeInput.value = codeInput.value.toUpperCase();
+            try { codeInput.setSelectionRange(pos, pos); } catch (_) {}
+        };
+    }
     if (nameInput) { nameInput.value = ''; errName && errName.classList.add('hidden'); }
 
     modal && modal.classList.remove('hidden');
@@ -1789,7 +1816,7 @@ function closeAddSubjectModal() {
             const errCode   = document.getElementById('err-modal-code');
             const errName   = document.getElementById('err-modal-name');
 
-            const code = codeInput ? codeInput.value.trim() : '';
+            const code = codeInput ? codeInput.value.trim().toUpperCase() : '';  // Feature 3: always uppercase
             const name = nameInput ? nameInput.value.trim() : '';
 
             let valid = true;
@@ -1903,7 +1930,7 @@ function renderSubjectsManual(effectiveDay, dateKey) {
             <div class="subject-header" onclick="showHistory('${subj.code}')" style="cursor: pointer;">
                 <div style="width: 100%;">
                     <span class="subject-time">Subject ${i + 1}</span>
-                    <h3 class="subject-name">${subj.code}</h3>
+                    <h3 class="subject-name">${subj.code} – ${subj.name}</h3>
                     <div class="subject-full-name">${subj.name}</div>
 
                     <div class="subject-progress-bar">
@@ -2085,3 +2112,119 @@ window.markAll = async function (dateKey, status) {
         }
     }
 };
+
+// ── Reset Timetable Feature ───────────────────────────────────────────────
+
+function openResetTimetableModal() {
+    const modal = document.getElementById('reset-timetable-modal');
+    const pwdInput = document.getElementById('reset-password-input');
+    const errText = document.getElementById('err-reset-password');
+
+    if (pwdInput) {
+        pwdInput.value = '';
+        errText && errText.classList.add('hidden');
+    }
+
+    modal && modal.classList.remove('hidden');
+    setTimeout(() => pwdInput && pwdInput.focus(), 80);
+}
+
+function closeResetTimetableModal() {
+    const modal = document.getElementById('reset-timetable-modal');
+    modal && modal.classList.add('hidden');
+}
+
+// Wire Reset Modal Buttons
+(function wireResetModal() {
+    const cancelBtn = document.getElementById('reset-tt-cancel-btn');
+    const confirmBtn = document.getElementById('reset-tt-confirm-btn');
+    const modal = document.getElementById('reset-timetable-modal');
+    const pwdInput = document.getElementById('reset-password-input');
+    
+    if (cancelBtn) cancelBtn.addEventListener('click', closeResetTimetableModal);
+    
+    // Close on backdrop
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeResetTimetableModal();
+        });
+    }
+
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', async () => {
+            const pwd = pwdInput ? pwdInput.value : '';
+            const errText = document.getElementById('err-reset-password');
+            
+            if (!pwd) {
+                if (errText) {
+                    errText.textContent = 'Password is required.';
+                    errText.classList.remove('hidden');
+                }
+                return;
+            }
+
+            // Lock button
+            const originalText = confirmBtn.innerHTML;
+            confirmBtn.innerHTML = 'Verifying...';
+            confirmBtn.disabled = true;
+            if (errText) errText.classList.add('hidden');
+
+            try {
+                // Determine user email
+                const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+                const email = storedUser.email;
+
+                if (!email) {
+                    throw new Error("Unable to identify current user for verification.");
+                }
+
+                // Verify password against backend (using /api/login endpoint as generic auth check)
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email, password: pwd })
+                });
+
+                if (!res.ok) {
+                    const data = await res.json();
+                    throw new Error(data.error || 'Incorrect password.');
+                }
+
+                // Password Correct! Execute Safe Reset.
+                // WE ONLY CLEAR dept AND timetable logic! NEVER clear sub info or core account
+                
+                if (userConfig) {
+                    delete userConfig.dept;
+                    delete userConfig.it_elective_a;
+                    delete userConfig.it_elective_b;
+                    delete userConfig.ssdx_elective;
+                    delete userConfig.chem_elective;
+                    delete userConfig.bio_elective;
+                    delete userConfig.batch;
+                    delete userConfig.manual_timetable;
+                    delete userConfig.manual_info;
+                    
+                    localStorage.setItem(CONFIG_KEY(), JSON.stringify(userConfig));
+                    syncConfigToServer(null, userConfig); // Update server to reflect cleared dept config
+                }
+
+                localStorage.removeItem(DEPARTMENT_KEY());
+
+                // Reset successful!
+                closeResetTimetableModal();
+                
+                // Route to Department Selection
+                checkDepartment(); 
+                
+            } catch (err) {
+                if (errText) {
+                    errText.textContent = err.message || 'Verification failed. Please try again.';
+                    errText.classList.remove('hidden');
+                }
+            } finally {
+                confirmBtn.innerHTML = originalText;
+                confirmBtn.disabled = false;
+            }
+        });
+    }
+})();
