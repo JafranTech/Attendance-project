@@ -232,6 +232,7 @@ const avatarInput = document.getElementById('avatar-input');
 const avatarPreview = document.getElementById('avatar-preview');
 const profileNameInput = document.getElementById('profile-name');
 const saveProfileBtn = document.getElementById('save-profile-btn');
+const changeTTBtn = document.getElementById('change-timetable-btn');
 const headerRight = document.querySelector('.header-right');
 const themeToggle = document.getElementById('theme-toggle');
 
@@ -877,6 +878,12 @@ profileTrigger.addEventListener('click', openProfile);
 closeProfileBtn.addEventListener('click', closeProfile);
 profileOverlay.addEventListener('click', closeProfile);
 saveProfileBtn.addEventListener('click', saveProfile);
+if (changeTTBtn) {
+    changeTTBtn.addEventListener('click', () => {
+        closeProfile();
+        setTimeout(() => openResetTimetableModal(), 300);
+    });
+}
 
 avatarInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
@@ -968,24 +975,6 @@ function renderProfileUI(subResult) {
         return `<div class="default-avatar" style="font-size: 1rem">${initial}</div>`;
     };
     // Trigger element was updated with chip HTML in index.html — no innerHTML needed
-
-    // ── Inject "Change Timetable" button into Profile Drawer ──────────────
-    // Idempotent: remove any existing instance before re-injecting
-    const existingChangeTTBtn = document.getElementById('change-timetable-btn');
-    if (existingChangeTTBtn) existingChangeTTBtn.remove();
-
-    const drawerContent = document.querySelector('#profile-drawer .drawer-content');
-    if (drawerContent) {
-        const changeTTBtn = document.createElement('button');
-        changeTTBtn.id = 'change-timetable-btn';
-        changeTTBtn.className = 'profile-action-row danger';
-        changeTTBtn.innerHTML = '🔄 Change Timetable';
-        changeTTBtn.addEventListener('click', () => {
-            closeProfile();
-            setTimeout(() => openResetTimetableModal(), 300);
-        });
-        drawerContent.appendChild(changeTTBtn);
-    }
 }
 
 function renderAvatarPreview(src) {
@@ -1612,11 +1601,20 @@ function updateStats() {
         row.style.cursor = 'pointer';
 
         // Lookup full subject name
-        const fullName = SUBJECT_NAMES[subj] || "";
+        let displaySubj = subj;
+        let fullName = SUBJECT_NAMES[subj] || "";
+
+        if (!fullName && subj.includes(' - ')) {
+            const parts = subj.split(' - ');
+            displaySubj = parts[0].trim();
+            fullName = parts.slice(1).join(' - ').trim();
+        } else if (!fullName) {
+            fullName = "Manual Subject";
+        }
 
         row.innerHTML = `
             <div style="display: flex; flex-direction: column; gap: 2px;">
-                 <span style="font-weight: 700; font-size: 1rem;">${subj}</span>
+                 <span style="font-weight: 700; font-size: 1rem;">${displaySubj}</span>
                  <span style="font-size: 0.8rem; color: var(--text-secondary); opacity: 0.8;">${fullName}</span>
             </div>
             <span style="color: ${sPct < 75 ? 'var(--danger)' : 'var(--success)'}; font-weight: 700;">${sPct}% (${s.present}/${s.total})</span>
