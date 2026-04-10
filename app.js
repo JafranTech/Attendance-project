@@ -197,6 +197,8 @@ const screens = {
     dept: document.getElementById('department-screen'),
     setup: document.getElementById('setup-screen'),
     setupBio: document.getElementById('setup-screen-bio'),
+    setupManual: document.getElementById('setup-screen-manual'),
+    setupManualTimetable: document.getElementById('setup-screen-manual-timetable'),
     app: document.getElementById('app-screen'),
     notes: document.getElementById('notes-screen'),
     history: document.getElementById('history-screen')
@@ -540,7 +542,6 @@ function checkDepartment() {
         if (oldDept) {
             dept = oldDept;
             localStorage.setItem(DEPARTMENT_KEY(), dept);
-            // intentionally left old department for backward compatibility on this device
         }
     }
 
@@ -548,18 +549,20 @@ function checkDepartment() {
         showDeptSelection();
     } else if (dept === 'BIO') {
         showSetupBio();
-    } else {
-        // Default to IT if dept is IT or unknown (but valid enough to not be null)
-        // However, user requested strict flow. 
-        // If dept exists but is not BIO, we assume IT for now or check explicitly.
-        // Let's be explicit:
-        if (dept === 'IT') {
-            showSetup();
+    } else if (dept === 'MANUAL') {
+        // MANUAL: config already saved (manual_timetable exists) → go to app
+        // If config missing, restart at manual info screen
+        if (userConfig && userConfig.manual_timetable) {
+            // should not get here (loadData already populated userConfig, init() calls showApp)
+            showSetupManual();
         } else {
-            // Invalid dept key found? Reset and show selection
-            localStorage.removeItem(DEPARTMENT_KEY());
-            showDeptSelection();
+            showSetupManual();
         }
+    } else if (dept === 'IT') {
+        showSetup();
+    } else {
+        localStorage.removeItem(DEPARTMENT_KEY());
+        showDeptSelection();
     }
 }
 
@@ -653,32 +656,34 @@ themeToggle.addEventListener('click', () => {
 });
 
 // --- Navigation ---
-// --- Navigation ---
+function _hideAllScreens() {
+    Object.values(screens).forEach(s => s && s.classList.add('hidden'));
+}
+
 function showDeptSelection() {
+    _hideAllScreens();
     screens.dept.classList.remove('hidden');
-    screens.setup.classList.add('hidden');
-    screens.setupBio.classList.add('hidden');
-    screens.app.classList.add('hidden');
-    screens.notes.classList.add('hidden');
-    screens.history.classList.add('hidden');
 }
 
 function showSetup() {
-    screens.dept.classList.add('hidden');
+    _hideAllScreens();
     screens.setup.classList.remove('hidden');
-    screens.setupBio.classList.add('hidden');
-    screens.app.classList.add('hidden');
-    screens.notes.classList.add('hidden');
-    screens.history.classList.add('hidden');
 }
 
 function showSetupBio() {
-    screens.dept.classList.add('hidden');
-    screens.setup.classList.add('hidden');
+    _hideAllScreens();
     screens.setupBio.classList.remove('hidden');
-    screens.app.classList.add('hidden');
-    screens.notes.classList.add('hidden');
-    screens.history.classList.add('hidden');
+}
+
+function showSetupManual() {
+    _hideAllScreens();
+    screens.setupManual.classList.remove('hidden');
+}
+
+function showSetupManualTimetable() {
+    _hideAllScreens();
+    screens.setupManualTimetable.classList.remove('hidden');
+    renderManualTimetableBuilder();
 }
 
 function showNotes() {
@@ -754,8 +759,13 @@ deptForm.addEventListener('submit', (e) => {
     const formData = new FormData(deptForm);
     const dept = formData.get('dept');
     localStorage.setItem(DEPARTMENT_KEY(), dept);
-    syncConfigToServer(dept, null);
-    checkDepartment();
+    if (dept === 'MANUAL') {
+        syncConfigToServer(dept, null);
+        showSetupManual();
+    } else {
+        syncConfigToServer(dept, null);
+        checkDepartment();
+    }
 });
 
 setupForm.addEventListener('submit', (e) => {
@@ -985,18 +995,12 @@ function getInitialSafeDate() {
 }
 
 function showApp() {
-    screens.dept.classList.add('hidden');
-    screens.setup.classList.add('hidden');
-    screens.setupBio.classList.add('hidden');
-    screens.setupBio.classList.add('hidden');
-    screens.notes.classList.add('hidden');
-    screens.history.classList.add('hidden');
+    _hideAllScreens();
     screens.app.classList.remove('hidden');
 
     // Set initial state
     const safeDate = getInitialSafeDate();
     viewingMonth = new Date(safeDate);
-    // Don't modify time components of viewingMonth to avoid timezone shifts when getting month
     viewingMonth.setDate(1);
 
     renderDateScroll(viewingMonth);
@@ -1123,7 +1127,14 @@ function renderSubjects(dayOfWeek, dateObj) {
         return;
     }
 
-    // Determine Timetable based on Department
+    // ── MANUAL TIMETABLE: isolated data source switch ──────────────
+    if (userConfig.dept === 'MANUAL') {
+        if (isSaturdayWorking) appendSaturdayControl(dateKey, satOverrideDay);
+        renderSubjectsManual(effectiveDay, dateKey);
+        return;
+    }
+
+    // Determine Timetable based on Department (IT / BIO — unchanged)
     const isBio = (userConfig.dept === 'BIO');
     const timetableSource = isBio ? BIO_TIMETABLE : TIMETABLE;
 
@@ -1596,6 +1607,372 @@ function updateStats() {
     });
 }
 
+// ═══════════════════════════════════════════════════════════════
+// MANUAL TIMETABLE MODE — ISOLATED FEATURE BLOCK
+// ═══════════════════════════════════════════════════════════════
+
+// ── State ────────────────────────────────────────────────────────
+// Keyed by day name: { Monday: [{code, name}, ...], ... }
+const MANUAL_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+// dayIndex maps day name → JS getDay() value
+const MANUAL_DAY_INDEX = { Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5 };
+
+let manualTimetableState = {
+    Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: []
+};
+
+// Persisted details from Step 2
+let manualSetupInfo = { college: '', dept: '', semester: '' };
+
+// Which day the modal is currently targeting
+let _modalTargetDay = null;
+
+// ── Step 2: Manual Info Form Handler ─────────────────────────────
+const setupFormManual = document.getElementById('setup-form-manual');
+if (setupFormManual) {
+    setupFormManual.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const college = document.getElementById('manual-college').value.trim();
+        const dept    = document.getElementById('manual-dept').value.trim();
+        const sem     = document.getElementById('manual-sem').value;
+
+        // Field-level validation
+        let valid = true;
+
+        const errCollege = document.getElementById('err-college');
+        const errDept    = document.getElementById('err-dept');
+        const errSem     = document.getElementById('err-sem');
+
+        if (!college) { errCollege.classList.remove('hidden'); valid = false; }
+        else { errCollege.classList.add('hidden'); }
+
+        if (!dept) { errDept.classList.remove('hidden'); valid = false; }
+        else { errDept.classList.add('hidden'); }
+
+        if (!sem) { errSem.classList.remove('hidden'); valid = false; }
+        else { errSem.classList.add('hidden'); }
+
+        if (!valid) return;
+
+        manualSetupInfo = { college, dept, semester: sem };
+        // Reset state on each fresh entry to Step 3
+        manualTimetableState = { Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [] };
+
+        showSetupManualTimetable();
+    });
+}
+
+// ── Step 3: Timetable Builder ─────────────────────────────────────
+
+function renderManualTimetableBuilder() {
+    const wrapper = document.getElementById('manual-days-wrapper');
+    if (!wrapper) return;
+    wrapper.innerHTML = '';
+
+    MANUAL_DAYS.forEach(day => {
+        const section = document.createElement('div');
+        section.className = 'manual-day-section';
+        section.id = `manual-day-${day}`;
+
+        const subjects = manualTimetableState[day] || [];
+        if (subjects.length > 0) section.classList.add('has-subjects');
+
+        section.innerHTML = `
+            <div class="manual-day-section-header">
+                <span class="manual-day-title">${day}</span>
+                <span class="manual-day-meta">${subjects.length} subject${subjects.length !== 1 ? 's' : ''}</span>
+            </div>
+            <ul class="manual-subject-list" id="slist-${day}"></ul>
+            <button class="manual-add-subject-btn" data-day="${day}" type="button">
+                <span class="plus-icon">+</span> Add Subject
+            </button>
+        `;
+        wrapper.appendChild(section);
+
+        // Populate existing subjects
+        const list = section.querySelector(`#slist-${day}`);
+        subjects.forEach((subj, idx) => _appendSubjectItem(list, day, subj, idx));
+
+        // Bind "+" button
+        section.querySelector('.manual-add-subject-btn').addEventListener('click', () => {
+            openAddSubjectModal(day);
+        });
+    });
+
+    // Save & Continue button
+    const saveBtn = document.getElementById('manual-tt-save-btn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', handleManualTimetableSave, { once: false });
+    }
+}
+
+// Add a rendered <li> for a subject
+function _appendSubjectItem(listEl, day, subj, idx) {
+    const li = document.createElement('li');
+    li.className = 'manual-subject-item';
+    li.dataset.idx = idx;
+    li.innerHTML = `
+        <div class="manual-subject-info">
+            <div class="manual-subject-code">${subj.code}</div>
+            <div class="manual-subject-name">${subj.name}</div>
+        </div>
+        <button class="manual-subject-remove" title="Remove" type="button" aria-label="Remove ${subj.code}">×</button>
+    `;
+    li.querySelector('.manual-subject-remove').addEventListener('click', () => {
+        removeManualSubject(day, idx);
+    });
+    listEl.appendChild(li);
+}
+
+function removeManualSubject(day, idx) {
+    manualTimetableState[day].splice(idx, 1);
+    refreshDaySection(day);
+}
+
+function refreshDaySection(day) {
+    const section = document.getElementById(`manual-day-${day}`);
+    if (!section) return;
+
+    const subjects = manualTimetableState[day] || [];
+    section.classList.toggle('has-subjects', subjects.length > 0);
+
+    // Update meta count
+    const meta = section.querySelector('.manual-day-meta');
+    if (meta) meta.textContent = `${subjects.length} subject${subjects.length !== 1 ? 's' : ''}`;
+
+    // Rebuild the subject list
+    const list = section.querySelector(`#slist-${day}`);
+    if (list) {
+        list.innerHTML = '';
+        subjects.forEach((subj, i) => _appendSubjectItem(list, day, subj, i));
+    }
+}
+
+// ── Add Subject Modal ─────────────────────────────────────────────
+
+function openAddSubjectModal(day) {
+    _modalTargetDay = day;
+
+    const modal = document.getElementById('add-subject-modal');
+    const label = document.getElementById('add-subject-modal-day-label');
+    const codeInput = document.getElementById('modal-course-code');
+    const nameInput = document.getElementById('modal-course-name');
+    const errCode   = document.getElementById('err-modal-code');
+    const errName   = document.getElementById('err-modal-name');
+
+    if (label)     label.textContent = day;
+    if (codeInput) { codeInput.value = ''; errCode && errCode.classList.add('hidden'); }
+    if (nameInput) { nameInput.value = ''; errName && errName.classList.add('hidden'); }
+
+    modal && modal.classList.remove('hidden');
+    setTimeout(() => codeInput && codeInput.focus(), 80);
+}
+
+function closeAddSubjectModal() {
+    const modal = document.getElementById('add-subject-modal');
+    modal && modal.classList.add('hidden');
+    _modalTargetDay = null;
+}
+
+// Wire modal buttons (once — safe even if called after DOM ready)
+(function wireModalButtons() {
+    const cancelBtn = document.getElementById('modal-cancel-btn');
+    const saveBtn   = document.getElementById('modal-save-btn');
+
+    if (cancelBtn) cancelBtn.addEventListener('click', closeAddSubjectModal);
+
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            const codeInput = document.getElementById('modal-course-code');
+            const nameInput = document.getElementById('modal-course-name');
+            const errCode   = document.getElementById('err-modal-code');
+            const errName   = document.getElementById('err-modal-name');
+
+            const code = codeInput ? codeInput.value.trim() : '';
+            const name = nameInput ? nameInput.value.trim() : '';
+
+            let valid = true;
+            if (!code) { errCode && errCode.classList.remove('hidden'); valid = false; }
+            else        { errCode && errCode.classList.add('hidden'); }
+
+            if (!name) { errName && errName.classList.remove('hidden'); valid = false; }
+            else        { errName && errName.classList.add('hidden'); }
+
+            if (!valid || !_modalTargetDay) return;
+
+            manualTimetableState[_modalTargetDay].push({ code, name });
+            refreshDaySection(_modalTargetDay);
+            closeAddSubjectModal();
+
+            // Hide error banner if it was showing
+            const errBanner = document.getElementById('manual-tt-error');
+            if (errBanner) errBanner.classList.add('hidden');
+        });
+    }
+
+    // Close on backdrop click
+    const modal = document.getElementById('add-subject-modal');
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeAddSubjectModal();
+        });
+    }
+})();
+
+// ── Save & Continue ───────────────────────────────────────────────
+
+function handleManualTimetableSave() {
+    const errBanner = document.getElementById('manual-tt-error');
+
+    // Validate every day has at least one subject
+    const incompleteDay = MANUAL_DAYS.find(d => manualTimetableState[d].length === 0);
+    if (incompleteDay) {
+        if (errBanner) errBanner.classList.remove('hidden');
+        // Scroll to the incomplete day
+        const section = document.getElementById(`manual-day-${incompleteDay}`);
+        if (section) section.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+
+    if (errBanner) errBanner.classList.add('hidden');
+
+    // Build userConfig identically to IT/BIO pattern
+    userConfig = {
+        dept: 'MANUAL',
+        college: manualSetupInfo.college,
+        department: manualSetupInfo.dept,
+        semester: manualSetupInfo.semester,
+        manual_timetable: JSON.parse(JSON.stringify(manualTimetableState)) // deep clone
+    };
+
+    localStorage.setItem(DEPARTMENT_KEY(), 'MANUAL');
+    localStorage.setItem(CONFIG_KEY(), JSON.stringify(userConfig));
+    syncConfigToServer('MANUAL', userConfig);
+
+    showApp();
+    checkSubscriptionStatus().then(res => renderProfileUI(res));
+}
+
+// ── Attendance Rendering for MANUAL dept ─────────────────────────
+
+/**
+ * Renders subject cards for a manual-timetable day.
+ * Subjects have no time slot — we use "slot N" as the unique key
+ * so attendance data is stored as "CS301 [1]", "CS302 [2]", etc.
+ * This keeps the storage key unique per position per day,
+ * and is compatible with the existing mark() / markAll() / stats logic.
+ */
+function renderSubjectsManual(effectiveDay, dateKey) {
+    const dayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][effectiveDay];
+    const subjects = (userConfig.manual_timetable && userConfig.manual_timetable[dayName]) || [];
+
+    if (subjects.length === 0) {
+        subjectsContainer.innerHTML = '<div class="empty-state">No classes today! 🎉</div>';
+        appendHolidayButton(dateKey, false);
+        return;
+    }
+
+    // Bulk action bar (manual-friendly version using subjects directly)
+    const bulkDiv = document.createElement('div');
+    bulkDiv.className = 'bulk-actions-bar';
+    bulkDiv.innerHTML = `
+        <button class="btn-bulk-action btn-present-all" onclick="markAllManual('${dateKey}', '${dayName}', 'P')">
+            ✅ Present All
+        </button>
+        <button class="btn-bulk-action btn-absent-all" onclick="markAllManual('${dateKey}', '${dayName}', 'A')">
+            ❌ Absent All
+        </button>
+    `;
+    subjectsContainer.appendChild(bulkDiv);
+
+    subjects.forEach((subj, i) => {
+        const uniqueKey = `${subj.code} [${i + 1}]`;
+        const record    = attendanceData[dateKey]?.[uniqueKey];
+
+        const stats = getSubjectStats(subj.code);
+        const pct = stats.total === 0 ? 0 : Math.round((stats.present / stats.total) * 100);
+
+        let colorClass = 'progress-red';
+        if (pct >= 75) colorClass = 'progress-green';
+        else if (pct >= 70) colorClass = 'progress-yellow';
+
+        const card = document.createElement('div');
+        card.className = 'subject-card';
+        card.innerHTML = `
+            <div class="subject-header" onclick="showHistory('${subj.code}')" style="cursor: pointer;">
+                <div style="width: 100%;">
+                    <span class="subject-time">Subject ${i + 1}</span>
+                    <h3 class="subject-name">${subj.code}</h3>
+                    <div class="subject-full-name">${subj.name}</div>
+
+                    <div class="subject-progress-bar">
+                        <div class="progress-fill ${colorClass}" style="width: ${pct}%"></div>
+                    </div>
+                    <div class="progress-text" style="font-weight: 700; font-size: 0.9rem;">${pct}% (${stats.present}/${stats.total}) Attendance</div>
+
+                    <span class="subject-type">Manual Subject</span>
+                </div>
+            </div>
+            <div class="attendance-actions">
+                <button class="btn-action btn-present ${record === 'P' ? 'active' : ''}" onclick="mark('${dateKey}', '${uniqueKey}', 'P')">Present</button>
+                <button class="btn-action btn-absent ${record === 'A' ? 'active' : ''}" onclick="mark('${dateKey}', '${uniqueKey}', 'A')">Absent</button>
+            </div>
+        `;
+        subjectsContainer.appendChild(card);
+    });
+
+    appendHolidayButton(dateKey, false);
+}
+
+// Bulk mark for MANUAL dept
+window.markAllManual = async function (dateKey, dayName, status) {
+    const action = status === 'P' ? 'Present' : 'Absent';
+    if (!confirm(`Mark ALL classes for this date as ${action}?`)) return;
+
+    const subjects = (userConfig.manual_timetable && userConfig.manual_timetable[dayName]) || [];
+    if (!subjects.length) return;
+    if (!attendanceData[dateKey]) attendanceData[dateKey] = {};
+
+    const toMark = [];
+    subjects.forEach((subj, i) => {
+        const uniqueKey = `${subj.code} [${i + 1}]`;
+        attendanceData[dateKey][uniqueKey] = status;
+        toMark.push(uniqueKey);
+    });
+
+    selectDate(selectedDate);
+    updateStats();
+
+    const token = localStorage.getItem('token');
+    for (const storageKey of toMark) {
+        try {
+            const res = await fetch('/api/attendance', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({ subject: storageKey, date: dateKey, status })
+            });
+            if (res.status === 403) {
+                const err = await res.json();
+                alert('⚠️ ' + (err.message || 'Your trial has ended. Please upgrade.'));
+                toMark.forEach(k => { delete attendanceData[dateKey][k]; });
+                selectDate(selectedDate);
+                updateStats();
+                return;
+            }
+        } catch (e) {
+            console.warn('[markAllManual] Network error:', e.message);
+        }
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// END: MANUAL TIMETABLE MODE
+// ═══════════════════════════════════════════════════════════════
+
 // Start
 init();
 // --- Bulk Action Logic ---
@@ -1652,11 +2029,19 @@ window.markAll = async function (dateKey, status) {
         effectiveDay = saturdayData[dateKey];
     }
 
+    // MANUAL dept uses its own bulk-mark function
+    if (userConfig.dept === 'MANUAL') {
+        const dayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][effectiveDay];
+        await window.markAllManual(dateKey, dayName, status);
+        return;
+    }
+
     const isBio = (userConfig.dept === 'BIO');
     const timetableSource = isBio ? BIO_TIMETABLE : TIMETABLE;
     const slots = timetableSource[effectiveDay];
 
     if (!slots) return;
+
     if (!attendanceData[dateKey]) attendanceData[dateKey] = {};
 
     const toMark = [];

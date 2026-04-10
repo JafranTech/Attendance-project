@@ -1208,3 +1208,216 @@ body.dark-mode .upgrade-semester {
     color: #15803d;
     border: 1px solid #86efac;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   MANUAL TIMETABLE MODE
+═══════════════════════════════════════════════════════════════ */
+
+/* Field-level validation error */
+.field-error {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--danger);
+    margin-top: 6px;
+    font-weight: 500;
+}
+
+/* Manual Timetable Builder wrapper */
+.manual-tt-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px 20px 60px;
+}
+
+.manual-tt-header {
+    margin-bottom: 28px;
+}
+
+.manual-tt-header h1 {
+    font-size: 2rem;
+    color: var(--primary);
+    margin-bottom: 6px;
+}
+
+.manual-tt-header p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+/* Each Day Card */
+.manual-day-section {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+    transition: border-color 0.2s;
+}
+
+.manual-day-section.has-subjects {
+    border-color: #86EFAC;
+}
+
+.manual-day-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.manual-day-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.manual-day-meta {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Subject item in builder */
+.manual-subject-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.manual-subject-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    gap: 10px;
+    animation: slideIn 0.2s ease;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.manual-subject-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.manual-subject-code {
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: var(--primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.manual-subject-name {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.manual-subject-remove {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    line-height: 1;
+}
+
+.manual-subject-remove:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+    background: #FEF2F2;
+}
+
+/* "+" Add Subject button */
+.manual-add-subject-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: 1.5px dashed var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    width: 100%;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 0.88rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.manual-add-subject-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: #EFF6FF;
+}
+
+.manual-add-subject-btn .plus-icon {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+/* Error banner at bottom of builder */
+.manual-tt-error {
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    color: var(--danger);
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-top: 16px;
+}
+
+/* Add Subject Modal overrides */
+.add-subject-modal-content {
+    text-align: left;
+    max-width: 360px;
+    width: 92%;
+}
+
+.add-subject-modal-content h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: var(--text-main);
+}
+
+/* dark mode tweaks for manual builder */
+body.dark-mode .manual-day-section {
+    box-shadow: none;
+}
+
+body.dark-mode .manual-subject-item {
+    background: #0F172A;
+}
+
+body.dark-mode .manual-day-section.has-subjects {
+    border-color: #166534;
+}
+
+body.dark-mode .modal-content {
+    background: var(--card-bg);
+    color: var(--text-main);
+}

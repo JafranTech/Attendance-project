@@ -41,10 +41,99 @@
                             <input type="radio" name="dept" value="BIO" required>
                             <span>Biotechnology</span>
                         </label>
+                        <label class="radio-card">
+                            <input type="radio" name="dept" value="MANUAL" required>
+                            <span>✏️ Manual Timetable <small style="display:block;font-weight:400;font-size:0.8rem;color:var(--text-secondary)">My department isn't listed</small></span>
+                        </label>
                     </div>
                 </div>
                 <button type="submit" class="btn-primary">Next</button>
             </form>
+        </div>
+    </div>
+
+    <!-- ─── Manual Setup Screen (Step 2) ─────────────────────────────────── -->
+    <div id="setup-screen-manual" class="screen hidden">
+        <div class="setup-container">
+            <div class="logo-wrapper">
+                <img src="assets/logo-new.jpg" alt="Institute Logo" class="app-logo">
+            </div>
+            <h1>Your Details ✏️</h1>
+            <p>Tell us about your college and department.</p>
+
+            <form id="setup-form-manual">
+                <div class="form-group">
+                    <label for="manual-college">College Name</label>
+                    <input type="text" id="manual-college" class="drawer-input" placeholder="e.g. Mumbai University" autocomplete="off" required>
+                    <span class="field-error hidden" id="err-college">Please enter your college name.</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="manual-dept">Department Name</label>
+                    <input type="text" id="manual-dept" class="drawer-input" placeholder="e.g. Computer Engineering" autocomplete="off" required>
+                    <span class="field-error hidden" id="err-dept">Please enter your department name.</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="manual-sem">Semester</label>
+                    <select id="manual-sem" class="drawer-input" required>
+                        <option value="">Select Semester…</option>
+                        <option value="1">Semester 1</option>
+                        <option value="2">Semester 2</option>
+                        <option value="3">Semester 3</option>
+                        <option value="4">Semester 4</option>
+                        <option value="5">Semester 5</option>
+                        <option value="6">Semester 6</option>
+                        <option value="7">Semester 7</option>
+                        <option value="8">Semester 8</option>
+                    </select>
+                    <span class="field-error hidden" id="err-sem">Please select a semester.</span>
+                </div>
+
+                <button type="submit" class="btn-primary">Save &amp; Continue →</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ─── Manual Timetable Builder Screen (Step 3) ─────────────────────── -->
+    <div id="setup-screen-manual-timetable" class="screen hidden">
+        <div class="manual-tt-container">
+            <div class="manual-tt-header">
+                <h1>Build Your Timetable 📅</h1>
+                <p>Add at least one subject for <strong>each day</strong> (Mon–Fri).</p>
+            </div>
+
+            <!-- Day sections rendered by JS via manualDays config -->
+            <div id="manual-days-wrapper"></div>
+
+            <div id="manual-tt-error" class="manual-tt-error hidden">⚠️ Every day must have at least one subject before you can continue.</div>
+
+            <button id="manual-tt-save-btn" class="btn-primary" style="margin-top:16px;">Save &amp; Continue →</button>
+        </div>
+    </div>
+
+    <!-- ─── Add Subject Modal (Manual Mode) ──────────────────────────────── -->
+    <div id="add-subject-modal" class="modal-overlay hidden">
+        <div class="modal-content add-subject-modal-content">
+            <h3>Add Subject</h3>
+            <p id="add-subject-modal-day-label" style="color:var(--primary);font-weight:600;margin-bottom:16px;"></p>
+
+            <div class="form-group">
+                <label for="modal-course-code">Course Code</label>
+                <input type="text" id="modal-course-code" class="drawer-input" placeholder="e.g. CS301" autocomplete="off">
+                <span class="field-error hidden" id="err-modal-code">Course Code is required.</span>
+            </div>
+
+            <div class="form-group">
+                <label for="modal-course-name">Course Name</label>
+                <input type="text" id="modal-course-name" class="drawer-input" placeholder="e.g. Data Structures" autocomplete="off">
+                <span class="field-error hidden" id="err-modal-name">Course Name is required.</span>
+            </div>
+
+            <div style="display:flex;gap:10px;margin-top:8px;">
+                <button id="modal-cancel-btn" class="btn-secondary" style="flex:1;">Cancel</button>
+                <button id="modal-save-btn" class="btn-primary" style="flex:1;margin-top:0;">Save Subject</button>
+            </div>
         </div>
     </div>
 
