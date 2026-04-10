@@ -90,11 +90,25 @@ module.exports = async function handler(req, res) {
             return res.status(200).json({ message: 'Attendance saved', record: data });
         }
 
-        // ── DELETE – remove an attendance record ──────────────────────────────
+        // ── DELETE – remove an attendance record or WIPE all ──────────────────
         if (req.method === 'DELETE') {
-            const { subject, date } = req.body || {};
+            const { subject, date, wipeAll } = req.body || {};
+            
+            if (wipeAll === true) {
+                const { error } = await supabase
+                    .from('attendance')
+                    .delete()
+                    .eq('user_id', user_id);
+
+                if (error) {
+                    console.error('[attendance] Wipe error:', error);
+                    return res.status(500).json({ error: 'Failed to wipe attendance' });
+                }
+                return res.status(200).json({ message: 'All attendance wiped' });
+            }
+
             if (!subject || !date) {
-                return res.status(400).json({ error: 'subject and date are required' });
+                return res.status(400).json({ error: 'subject and date are required unless wipeAll is true' });
             }
 
             const { error } = await supabase

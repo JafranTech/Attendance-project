@@ -2206,7 +2206,25 @@ function closeResetTimetableModal() {
                     syncConfigToServer(null, userConfig); // Update server to reflect cleared dept config
                 }
 
+                // ── WIPE ALL ATTENDANCE & LOCAL DATA ──────────────────────────────────
                 localStorage.removeItem(DEPARTMENT_KEY());
+                localStorage.removeItem(HOLIDAYS_KEY());
+                localStorage.removeItem(SATURDAY_KEY_FN());
+                attendanceData = {};
+                holidaysData = {};
+                if (typeof saturdayData !== 'undefined') saturdayData = {};
+
+                // Wipe backend attendance
+                try {
+                    await fetch('/api/attendance', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ wipeAll: true })
+                    });
+                } catch (e) {
+                    console.error('Failed to wipe attendance from server:', e);
+                }
+                // ──────────────────────────────────────────────────────────────────────
 
                 // Reset successful!
                 closeResetTimetableModal();
