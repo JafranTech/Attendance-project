@@ -319,7 +319,7 @@
     </div>
 
     <div class="plans-wrapper">
-        <a href="index.html" class="back-link">← Back to App</a>
+        <a href="dashboard.html" class="back-link">← Back to App</a>
 
         <div id="plans-content">
             <p class="loading-txt">Loading your plan…</p>
@@ -565,7 +565,7 @@
                         showOverlay('✅', 'Plan Activated!', `Your ${planLabel} plan is now active. Redirecting…`);
                         setTimeout(() => {
                             hideOverlay();
-                            window.location.href = 'index.html';
+                            window.location.href = 'dashboard.html';
                         }, 1800);
                     } else {
                         // Webhook may be delayed — inform user but don't lose them
@@ -576,7 +576,7 @@
                         );
                         setTimeout(() => {
                             hideOverlay();
-                            window.location.href = 'index.html';
+                            window.location.href = 'dashboard.html';
                         }, 3000);
                     }
                 },

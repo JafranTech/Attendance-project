@@ -1,515 +1,1068 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Student Attendance</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#ffffff">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="stylesheet" href="style.css">
-    <link rel="icon" type="image/jpeg" href="assets/logo-new.jpg">
-    <link rel="apple-touch-icon" href="assets/logo-new.jpg">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Load Razorpay SDK -->
-    <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
-</head>
+  <script>
+  if (localStorage.getItem('token')) {
+      window.location.replace('dashboard.html');
+  }
+</script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AttendIQ — Smart Student Attendance Tracking</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+  <style>
+    :root {
+      --void: #0F172A;
+      --deep: #0B1120;
+      --panel: #1E293B;
+      --pulse: #2563EB;
+      --glow: #3B82F6;
+      --neon: #60A5FA;
+      --cream: #F3F4F6;
+      --muted: #9CA3AF;
+      --border: #334155;
+      --font-head: 'Syne', sans-serif;
+      --font-drama: 'DM Serif Display', serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
 
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--void);
+      color: var(--cream);
+      font-family: var(--font-head);
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* ── Custom Cursor ── */
+    #cursor {
+      position: fixed; top: 0; left: 0; z-index: 9999;
+      pointer-events: none;
+      width: 12px; height: 12px;
+      background: var(--pulse);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.3s, height 0.3s, background 0.3s;
+      mix-blend-mode: screen;
+    }
+    #cursor-ring {
+      position: fixed; top: 0; left: 0; z-index: 9998;
+      pointer-events: none;
+      width: 36px; height: 36px;
+      border: 1.5px solid rgba(37,99,235,0.5);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: all 0.12s ease;
+    }
+    body:has(a:hover) #cursor, body:has(button:hover) #cursor {
+      width: 20px; height: 20px; background: var(--neon);
+    }
+
+    /* ── Noise Overlay ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 9990;
+      pointer-events: none;
+      opacity: 0.04;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    }
+
+    /* ── NAVBAR ── */
+    nav {
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+      z-index: 1000;
+      display: flex; align-items: center; justify-content: space-between;
+      width: min(1100px, 92vw);
+      padding: 14px 24px;
+      border-radius: 100px;
+      background: rgba(6,8,16,0.5);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      transition: all 0.4s ease;
+    }
+    nav.scrolled {
+      background: rgba(6,8,16,0.85);
+      border-color: rgba(37,99,235,0.3);
+      box-shadow: 0 8px 40px rgba(37,99,235,0.1);
+    }
+    .nav-logo {
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 1.2rem;
+      background: linear-gradient(135deg, var(--pulse), var(--neon));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      text-decoration: none;
+      letter-spacing: -0.02em;
+    }
+    .nav-links {
+      display: flex; align-items: center; gap: 6px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: rgba(240,244,255,0.65);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      padding: 7px 14px;
+      border-radius: 100px;
+      transition: all 0.25s;
+      letter-spacing: 0.01em;
+    }
+    .nav-links a:hover { color: var(--cream); background: rgba(37,99,235,0.12); }
+    .nav-actions { display: flex; gap: 10px; align-items: center; }
+    .btn-ghost {
+      color: var(--cream);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 8px 18px;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      background: transparent;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.25,0.46,0.45,0.94);
+      font-family: var(--font-head);
+    }
+    .btn-ghost:hover { background: rgba(37,99,235,0.1); border-color: var(--pulse); transform: translateY(-1px); }
+    .btn-primary {
+      color: var(--void);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 9px 20px;
+      border-radius: 100px;
+      border: none;
+      background: linear-gradient(135deg, var(--pulse), var(--neon));
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.25,0.46,0.45,0.94);
+      font-family: var(--font-head);
+      letter-spacing: 0.01em;
+      position: relative; overflow: hidden;
+    }
+    .btn-primary:hover { transform: scale(1.04) translateY(-1px); box-shadow: 0 8px 30px rgba(37,99,235,0.4); }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 100dvh;
+      position: relative;
+      display: flex; align-items: flex-end;
+      padding: 0 6vw 10vh;
+      overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute; inset: 0;
+      background: 
+        radial-gradient(ellipse 70% 60% at 60% 30%, rgba(37,99,235,0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 50% at 20% 70%, rgba(59,130,246,0.07) 0%, transparent 60%),
+        var(--void);
+    }
+    /* Grid lines */
+    .hero-bg::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(37,99,235,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37,99,235,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+    /* Floating orbs */
+    .orb {
+      position: absolute; border-radius: 50%;
+      filter: blur(80px); pointer-events: none;
+    }
+    .orb-1 { width: 400px; height: 400px; top: 10%; right: 5%; background: rgba(37,99,235,0.15); }
+    .orb-2 { width: 250px; height: 250px; bottom: 20%; right: 25%; background: rgba(59,130,246,0.1); }
+    .orb-3 { width: 300px; height: 300px; top: 40%; left: 2%; background: rgba(37,99,235,0.06); }
+
+    /* Stat cards floating */
+    .stat-float {
+      position: absolute;
+      background: rgba(17,24,39,0.85);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px 20px;
+      backdrop-filter: blur(12px);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+    }
+    .stat-float .stat-num { font-size: 1.6rem; font-weight: 500; color: var(--glow); line-height: 1; margin-bottom: 2px; font-family: var(--font-head); font-weight: 700; }
+    .stat-float .stat-label { color: var(--muted); font-size: 0.7rem; }
+    .sf-1 { top: 22%; right: 8%; animation: floatA 6s ease-in-out infinite; }
+    .sf-2 { top: 42%; right: 4%; animation: floatB 7s ease-in-out infinite 1s; }
+    .sf-3 { top: 62%; right: 12%; animation: floatA 5s ease-in-out infinite 0.5s; }
+
+    @keyframes floatA { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    @keyframes floatB { 0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)} }
+
+    .hero-content { position: relative; z-index: 2; max-width: 800px; }
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(37,99,235,0.08);
+      border: 1px solid rgba(37,99,235,0.25);
+      border-radius: 100px;
+      padding: 6px 16px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--glow);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+      font-family: var(--font-mono);
+    }
+    .hero-tag .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--neon); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+
+    .hero-h1 {
+      font-size: clamp(3rem, 8vw, 7rem);
+      font-weight: 800;
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+      margin-bottom: 8px;
+    }
+    .hero-h1 .line1 { display: block; color: var(--cream); }
+    .hero-h1 .line2 {
+      display: block;
+      font-family: var(--font-drama);
+      font-style: italic;
+      font-weight: 400;
+      font-size: clamp(3.5rem, 9vw, 8rem);
+      background: linear-gradient(135deg, var(--pulse) 0%, var(--neon) 60%, var(--glow) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-sub {
+      margin-top: 24px;
+      font-size: 1.05rem;
+      color: rgba(240,244,255,0.55);
+      max-width: 500px;
+      line-height: 1.7;
+      font-weight: 400;
+    }
+    .hero-ctas { display: flex; gap: 14px; margin-top: 36px; flex-wrap: wrap; }
+    .btn-hero {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 32px;
+      border-radius: 100px;
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 0.95rem;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: all 0.3s cubic-bezier(0.25,0.46,0.45,0.94);
+      position: relative; overflow: hidden;
+    }
+    .btn-hero-main {
+      background: linear-gradient(135deg, var(--pulse), var(--neon));
+      color: var(--void);
+    }
+    .btn-hero-main:hover { transform: scale(1.04) translateY(-2px); box-shadow: 0 16px 50px rgba(37,99,235,0.45); }
+    .btn-hero-outline {
+      background: transparent;
+      color: var(--cream);
+      border: 1px solid var(--border);
+    }
+    .btn-hero-outline:hover { background: rgba(37,99,235,0.08); border-color: var(--pulse); transform: translateY(-2px); }
+    .arrow-icon { width: 18px; height: 18px; transition: transform 0.25s; }
+    .btn-hero-main:hover .arrow-icon { transform: translateX(3px); }
+
+    /* Scroll indicator */
+    .scroll-hint {
+      position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      font-family: var(--font-mono); font-size: 0.65rem;
+      color: var(--muted); letter-spacing: 0.1em;
+      animation: fadeInUp 1s 1.5s both;
+    }
+    .scroll-line { width: 1px; height: 40px; background: linear-gradient(var(--pulse), transparent); animation: scrollLine 1.8s ease-in-out infinite; }
+    @keyframes scrollLine { 0%{opacity:0;transform:scaleY(0);transform-origin:top} 50%{opacity:1;transform:scaleY(1)} 100%{opacity:0;transform:scaleY(0);transform-origin:bottom} }
+    @keyframes fadeInUp { from{opacity:0;transform:translateX(-50%) translateY(10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+
+    /* ── MARQUEE ── */
+    .marquee-wrap { padding: 20px 0; overflow: hidden; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: rgba(11,15,26,0.8); }
+    .marquee-track { display: flex; gap: 60px; animation: marqueeScroll 25s linear infinite; white-space: nowrap; }
+    .marquee-track span { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; flex-shrink: 0; }
+    .marquee-track .m-accent { color: var(--pulse); }
+    @keyframes marqueeScroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+    /* ── SECTION BASE ── */
+    section { padding: 120px 6vw; }
+    .section-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-mono); font-size: 0.7rem;
+      color: var(--pulse); letter-spacing: 0.12em; text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+    .section-tag::before { content: '//'; color: var(--muted); }
+    .section-h2 {
+      font-size: clamp(2.2rem, 5vw, 4.5rem);
+      font-weight: 800; line-height: 1; letter-spacing: -0.03em;
+      margin-bottom: 16px;
+    }
+    .drama { font-family: var(--font-drama); font-style: italic; font-weight: 400; color: var(--glow); }
+
+    /* ── FEATURES ── */
+    #features { background: var(--deep); }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px; margin-top: 60px;
+    }
+    .feat-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 32px;
+      position: relative; overflow: hidden;
+      transition: all 0.35s cubic-bezier(0.25,0.46,0.45,0.94);
+    }
+    .feat-card:hover { border-color: rgba(37,99,235,0.4); transform: translateY(-4px); box-shadow: 0 20px 60px rgba(37,99,235,0.1); }
+    .feat-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(37,99,235,0.06) 0%, transparent 60%);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .feat-card:hover::before { opacity: 1; }
+    .feat-icon {
+      width: 48px; height: 48px; border-radius: 14px;
+      background: linear-gradient(135deg, rgba(37,99,235,0.2), rgba(59,130,246,0.1));
+      border: 1px solid rgba(37,99,235,0.25);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 20px; font-size: 1.3rem;
+    }
+    .feat-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; }
+    .feat-desc { color: rgba(240,244,255,0.5); font-size: 0.9rem; line-height: 1.7; font-weight: 400; }
+
+    /* ── LIVE DEMO WIDGET ── */
+    #demo { background: var(--void); position: relative; overflow: hidden; }
+    #demo::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 60% 80% at 50% 50%, rgba(37,99,235,0.06) 0%, transparent 70%);
+    }
+    .demo-container {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 60px; align-items: center; position: relative; z-index: 1;
+    }
+    .demo-phone {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 40px;
+      padding: 20px;
+      max-width: 320px; margin: 0 auto;
+      box-shadow: 0 40px 100px rgba(0,0,0,0.5), 0 0 60px rgba(37,99,235,0.1);
+      position: relative;
+    }
+    .demo-phone::before { content:''; display:block; width:80px;height:6px;background:var(--void);border-radius:3px;margin:0 auto 16px; }
+    .phone-header {
+      background: var(--deep); border-radius: 20px; padding: 16px;
+      margin-bottom: 14px; border: 1px solid var(--border);
+    }
+    .phone-title { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; font-family: var(--font-mono); }
+    .phone-pct { font-size: 2.2rem; font-weight: 800; color: var(--glow); line-height: 1; }
+    .phone-pct span { font-size: 1rem; font-weight: 500; color: var(--muted); }
+    .phone-bar { height: 6px; background: rgba(37,99,235,0.15); border-radius: 99px; margin-top: 10px; overflow: hidden; }
+    .phone-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--pulse), var(--neon)); width: 75%; animation: barFill 2s ease-out both; }
+    @keyframes barFill { from{width:0} to{width:75%} }
+    .subject-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 12px;
+      background: var(--deep); border-radius: 12px;
+      margin-bottom: 8px; border: 1px solid var(--border);
+      font-size: 0.78rem;
+    }
+    .subject-row .sub-name { font-weight: 600; }
+    .subject-row .sub-pct { font-family: var(--font-mono); color: var(--glow); font-size: 0.72rem; }
+    .sub-dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; display: inline-block; }
+    .sub-good { background: #22c55e; } .sub-warn { background: #f59e0b; } .sub-bad { background: #ef4444; }
+    .demo-text .section-h2 { margin-bottom: 20px; }
+    .demo-points { list-style: none; margin-top: 28px; display: flex; flex-direction: column; gap: 14px; }
+    .demo-points li {
+      display: flex; align-items: flex-start; gap: 12px;
+      color: rgba(240,244,255,0.65); font-size: 0.9rem; line-height: 1.6;
+    }
+    .demo-points li::before { content: '→'; color: var(--pulse); font-family: var(--font-mono); flex-shrink: 0; margin-top: 2px; }
+
+    /* ── STATS STRIP ── */
+    #stats { background: var(--deep); padding: 80px 6vw; }
+    .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 2px; }
+    .stat-cell {
+      padding: 40px 30px; text-align: center;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      position: relative; overflow: hidden;
+    }
+    .stat-cell:first-child { border-radius: 24px 0 0 24px; }
+    .stat-cell:last-child { border-radius: 0 24px 24px 0; }
+    .stat-cell::after { content:''; position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:40%;height:2px;background:linear-gradient(90deg,transparent,var(--pulse),transparent); }
+    .stat-n { font-size: 3rem; font-weight: 800; background: linear-gradient(135deg, var(--pulse), var(--neon)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; }
+    .stat-l { font-size: 0.8rem; color: var(--muted); margin-top: 8px; font-family: var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; }
+
+    /* ── HOW IT WORKS ── */
+    #how { background: var(--void); }
+    .steps { display: flex; flex-direction: column; gap: 0; margin-top: 60px; }
+    .step {
+      display: grid; grid-template-columns: 60px 1fr;
+      gap: 24px; padding: 40px 0;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+    .step:last-child { border-bottom: none; }
+    .step-num {
+      font-family: var(--font-mono); font-size: 0.7rem; color: var(--pulse);
+      padding-top: 6px; letter-spacing: 0.08em;
+    }
+    .step-body {}
+    .step-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 10px; }
+    .step-desc { color: rgba(240,244,255,0.5); line-height: 1.7; font-size: 0.9rem; max-width: 600px; font-weight: 400; }
+    .step-bar { position: absolute; left: 60px; top: 0; height: 2px; background: linear-gradient(90deg, var(--pulse), transparent); width: 0; transition: width 1s ease; }
+    .step.active .step-bar { width: 200px; }
+
+    /* ── MANIFESTO ── */
+    #manifesto {
+      background: var(--panel);
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      text-align: center; padding: 100px 6vw;
+    }
+    .manifesto-label { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 32px; }
+    .manifesto-old { font-size: clamp(1rem, 2.5vw, 1.4rem); color: rgba(240,244,255,0.3); margin-bottom: 20px; font-weight: 400; }
+    .manifesto-new { font-size: clamp(2rem, 5vw, 4rem); font-family: var(--font-drama); font-style: italic; line-height: 1.15; }
+    .manifesto-new .key { color: var(--neon); }
+
+    /* ── PRICING ── */
+    #pricing { background: var(--void); }
+    .pricing-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin-top: 60px; }
+    .price-card {
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      padding: 36px 30px;
+      position: relative; overflow: hidden;
+      transition: all 0.35s cubic-bezier(0.25,0.46,0.45,0.94);
+      background: var(--panel);
+    }
+    .price-card:hover { transform: translateY(-6px); }
+    .price-card.featured {
+      background: linear-gradient(145deg, rgba(37,99,235,0.15), rgba(59,130,246,0.08));
+      border-color: rgba(37,99,235,0.5);
+      box-shadow: 0 0 60px rgba(37,99,235,0.15);
+      transform: scale(1.03);
+    }
+    .price-card.featured:hover { transform: scale(1.03) translateY(-6px); }
+    .badge {
+      position: absolute; top: 20px; right: 20px;
+      background: linear-gradient(135deg, var(--pulse), var(--neon));
+      color: var(--void); font-size: 0.65rem; font-weight: 700;
+      padding: 4px 12px; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .plan-name { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-family: var(--font-mono); margin-bottom: 20px; }
+    .plan-price { font-size: 3.5rem; font-weight: 800; line-height: 1; letter-spacing: -0.03em; margin-bottom: 4px; }
+    .plan-price sup { font-size: 1.4rem; font-weight: 600; vertical-align: super; }
+    .plan-price .period { font-size: 0.9rem; font-weight: 400; color: var(--muted); }
+    .plan-desc { font-size: 0.85rem; color: var(--muted); margin-bottom: 28px; line-height: 1.6; font-weight: 400; }
+    .plan-features { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 32px; }
+    .plan-features li { font-size: 0.87rem; color: rgba(240,244,255,0.65); display: flex; align-items: center; gap: 10px; }
+    .plan-features li::before { content: '✓'; color: var(--neon); font-weight: 700; font-family: var(--font-mono); flex-shrink:0; }
+    .plan-features li.crossed { color: rgba(240,244,255,0.25); }
+    .plan-features li.crossed::before { content: '×'; color: var(--muted); }
+    .btn-plan {
+      width: 100%; padding: 13px; border-radius: 14px;
+      font-family: var(--font-head); font-weight: 700; font-size: 0.9rem;
+      cursor: pointer; border: none;
+      transition: all 0.3s cubic-bezier(0.25,0.46,0.45,0.94);
+      text-decoration: none; display: block; text-align: center;
+    }
+    .btn-plan-outline { background: transparent; color: var(--cream); border: 1px solid var(--border); }
+    .btn-plan-outline:hover { background: rgba(37,99,235,0.1); border-color: var(--pulse); }
+    .btn-plan-fill { background: linear-gradient(135deg, var(--pulse), var(--neon)); color: var(--void); }
+    .btn-plan-fill:hover { box-shadow: 0 10px 40px rgba(37,99,235,0.45); transform: translateY(-1px); }
+
+    /* ── TESTIMONIALS ── */
+    #testimonials { background: var(--deep); }
+    .testi-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin-top: 60px; }
+    .testi-card {
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 24px; padding: 28px;
+      transition: all 0.3s ease;
+    }
+    .testi-card:hover { border-color: rgba(37,99,235,0.35); transform: translateY(-3px); }
+    .testi-stars { color: #f59e0b; font-size: 0.9rem; margin-bottom: 16px; letter-spacing: 2px; }
+    .testi-text { font-size: 0.9rem; line-height: 1.7; color: rgba(240,244,255,0.65); font-weight: 400; margin-bottom: 20px; font-style: italic; }
+    .testi-author { display: flex; align-items: center; gap: 12px; }
+    .testi-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, var(--pulse), var(--neon)); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; color: var(--void); flex-shrink: 0; }
+    .testi-name { font-size: 0.85rem; font-weight: 700; }
+    .testi-role { font-size: 0.72rem; color: var(--muted); font-family: var(--font-mono); }
+
+    /* ── FAQ ── */
+    #faq { background: var(--void); }
+    .faq-list { margin-top: 50px; display: flex; flex-direction: column; gap: 2px; max-width: 760px; }
+    .faq-item {
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden; cursor: pointer;
+    }
+    .faq-item:hover { border-color: rgba(37,99,235,0.35); }
+    .faq-q {
+      padding: 20px 24px; font-size: 0.95rem; font-weight: 600;
+      display: flex; justify-content: space-between; align-items: center;
+      user-select: none;
+    }
+    .faq-icon { width: 24px; height: 24px; border: 1px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: transform 0.3s, background 0.3s; flex-shrink: 0; }
+    .faq-item.open .faq-icon { transform: rotate(45deg); background: rgba(37,99,235,0.15); border-color: var(--pulse); }
+    .faq-a { max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.3s; }
+    .faq-a-inner { padding: 0 24px 20px; color: rgba(240,244,255,0.55); font-size: 0.88rem; line-height: 1.8; font-weight: 400; }
+    .faq-item.open .faq-a { max-height: 200px; }
+
+    /* ── CTA BAND ── */
+    #cta {
+      background: linear-gradient(135deg, rgba(37,99,235,0.12), rgba(59,130,246,0.06));
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      padding: 100px 6vw; text-align: center;
+    }
+    #cta .big-h { font-size: clamp(2.5rem, 6vw, 5.5rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; margin-bottom: 20px; }
+    #cta .big-sub { font-size: 1rem; color: rgba(240,244,255,0.5); margin-bottom: 36px; font-weight: 400; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--deep);
+      border-top: 1px solid var(--border);
+      padding: 60px 6vw 40px;
+      border-radius: 40px 40px 0 0;
+    }
+    .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px; margin-bottom: 50px; }
+    .footer-brand { }
+    .footer-logo { font-size: 1.4rem; font-weight: 800; background: linear-gradient(135deg, var(--pulse), var(--neon)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 14px; }
+    .footer-tagline { font-size: 0.85rem; color: var(--muted); line-height: 1.7; font-weight: 400; max-width: 260px; }
+    .footer-col h4 { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; font-family: var(--font-mono); }
+    .footer-col a { display: block; color: rgba(240,244,255,0.5); text-decoration: none; font-size: 0.87rem; margin-bottom: 10px; transition: color 0.25s; font-weight: 400; }
+    .footer-col a:hover { color: var(--cream); }
+    .footer-bottom { border-top: 1px solid var(--border); padding-top: 28px; display: flex; justify-content: space-between; align-items: center; }
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2);
+      border-radius: 100px; padding: 6px 14px;
+      font-family: var(--font-mono); font-size: 0.68rem; color: #4ade80;
+      letter-spacing: 0.06em;
+    }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; animation: pulse 1.5s infinite; }
+    .footer-legal { font-size: 0.75rem; color: var(--muted); font-weight: 400; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .nav-links { display: none; }
+      .demo-container { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: repeat(2,1fr); }
+      .stat-cell:nth-child(2) { border-radius: 0 24px 0 0; }
+      .stat-cell:nth-child(3) { border-radius: 0 0 0 24px; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .price-card.featured { transform: none; }
+      .testi-grid { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+      .sf-1,.sf-2,.sf-3 { display: none; }
+    }
+    @media (max-width: 600px) {
+      section { padding: 80px 5vw; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .stat-cell:first-child { border-radius: 24px 0 0 0; }
+      .stat-cell:nth-child(2) { border-radius: 0 24px 0 0; }
+      .stat-cell:nth-child(3) { border-radius: 0 0 0 24px; }
+      .stat-cell:last-child { border-radius: 0 0 24px 0; }
+      .footer-grid { grid-template-columns: 1fr; }
+      .footer-bottom { flex-direction: column; gap: 12px; text-align: center; }
+    }
+
+    /* Reveal animation classes */
+    .reveal { opacity: 0; transform: translateY(40px); }
+    .reveal.visible { animation: revealUp 0.7s cubic-bezier(0.25,0.46,0.45,0.94) forwards; }
+    @keyframes revealUp { to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
 <body>
 
-    <!-- Department Screen -->
-    <div id="department-screen" class="screen hidden">
-        <div class="setup-container">
-            <div class="logo-wrapper">
-                <img src="assets/logo-new.jpg" alt="Institute Logo" class="app-logo">
-            </div>
-            <h1>Department</h1>
-            <p>Please select your department.</p>
+<!-- Custom Cursor -->
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
 
-            <form id="department-form">
-                <div class="form-group">
-                    <div class="radio-group">
-                        <label class="radio-card">
-                            <input type="radio" name="dept" value="IT" required>
-                            <span>Information Technology</span>
-                        </label>
-                        <label class="radio-card">
-                            <input type="radio" name="dept" value="BIO" required>
-                            <span>Biotechnology</span>
-                        </label>
-                        <label class="radio-card">
-                            <input type="radio" name="dept" value="MANUAL" required>
-                            <span>Manual Timetable <small style="display:block;font-weight:400;font-size:0.8rem;color:var(--text-secondary)"></small></span>
-                        </label>
-                    </div>
-                </div>
-                <button type="submit" class="btn-primary">Next</button>
-            </form>
+<!-- ── NAVBAR ── -->
+<nav id="navbar">
+  <a href="#" class="nav-logo">AttendIQ</a>
+  <ul class="nav-links">
+    <li><a href="#features">Home</a></li>
+    <li><a href="#demo">Features</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#faq">Contact</a></li>
+  </ul>
+  <div class="nav-actions">
+    <a href="login.html" class="btn-ghost">Login</a>
+    <a href="register.html" class="btn-primary">Sign Up</a>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <!-- Floating stat cards -->
+  <div class="stat-float sf-1">
+    <div class="stat-num">78.4%</div>
+    <div class="stat-label">Overall Attendance</div>
+  </div>
+  <div class="stat-float sf-2">
+    <div class="stat-num">14</div>
+    <div class="stat-label">Classes This Week</div>
+  </div>
+  <div class="stat-float sf-3">
+    <div class="stat-num" style="color:var(--neon)">Safe</div>
+    <div class="stat-label">Attendance Status</div>
+  </div>
+
+  <div class="hero-content">
+    <div class="hero-tag"><span class="dot"></span> Now live for Crescent Institute Students</div>
+    <h1 class="hero-h1">
+      <span class="line1">Track Attendance,</span>
+      <span class="line2">Own Your Semester.</span>
+    </h1>
+    <p class="hero-sub">The smartest attendance tracker built for students — period-wise tracking, smart timetables, offline PWA, and real-time percentage insights. Never be caught off-guard by attendance shortfall again.</p>
+    <div class="hero-ctas">
+      <a href="login.html" class="btn-hero btn-hero-main">
+        Get Started Free
+        <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+      <a href="#demo" class="btn-hero btn-hero-outline">See How It Works</a>
+    </div>
+  </div>
+  <div class="scroll-hint">
+    <div class="scroll-line"></div>
+    <span>SCROLL</span>
+  </div>
+</section>
+
+<!-- ── MARQUEE ── -->
+<div class="marquee-wrap">
+  <div class="marquee-track">
+    <span>Period-wise Tracking</span><span class="m-accent">◆</span>
+    <span>Smart Timetable</span><span class="m-accent">◆</span>
+    <span>Offline PWA</span><span class="m-accent">◆</span>
+    <span>Real-time Percentage</span><span class="m-accent">◆</span>
+    <span>Holiday Marking</span><span class="m-accent">◆</span>
+    <span>Elective Support</span><span class="m-accent">◆</span>
+    <span>Subject-wise Analytics</span><span class="m-accent">◆</span>
+    <span>Installable App</span><span class="m-accent">◆</span>
+    <!-- Duplicate for seamless loop -->
+    <span>Period-wise Tracking</span><span class="m-accent">◆</span>
+    <span>Smart Timetable</span><span class="m-accent">◆</span>
+    <span>Offline PWA</span><span class="m-accent">◆</span>
+    <span>Real-time Percentage</span><span class="m-accent">◆</span>
+    <span>Holiday Marking</span><span class="m-accent">◆</span>
+    <span>Elective Support</span><span class="m-accent">◆</span>
+    <span>Subject-wise Analytics</span><span class="m-accent">◆</span>
+    <span>Installable App</span><span class="m-accent">◆</span>
+  </div>
+</div>
+
+<!-- ── FEATURES ── -->
+<section id="features">
+  <div class="section-tag">Features</div>
+  <h2 class="section-h2">Built for <span class="drama">every student</span></h2>
+  <p style="color:var(--muted);font-size:0.95rem;max-width:500px;font-weight:400;line-height:1.7">Everything you need to stay on top of your attendance — from first period to last, online or offline.</p>
+  <div class="features-grid">
+    <div class="feat-card reveal">
+      <div class="feat-icon">📅</div>
+      <div class="feat-title">Period-Based Precision</div>
+      <div class="feat-desc">Each 50-minute period counted individually. Long lab blocks automatically split. Batch-wise subject rotation handled intelligently.</div>
+    </div>
+    <div class="feat-card reveal" style="animation-delay:0.1s">
+      <div class="feat-icon">📴</div>
+      <div class="feat-title">100% Offline First</div>
+      <div class="feat-desc">Works without internet. Install as a mobile app. All data saved locally — your attendance records never leave your device.</div>
+    </div>
+    <div class="feat-card reveal" style="animation-delay:0.2s">
+      <div class="feat-icon">🧠</div>
+      <div class="feat-title">Smart Timetable Engine</div>
+      <div class="feat-desc">Handles elective subjects, batch rotations, and holiday exclusions. Configure once, track all semester — no manual adjustments needed.</div>
+    </div>
+    <div class="feat-card reveal" style="animation-delay:0.15s">
+      <div class="feat-icon">📊</div>
+      <div class="feat-title">Live Analytics Dashboard</div>
+      <div class="feat-desc">Subject-wise and overall attendance percentage, updated in real-time. Know exactly how many classes you can skip — safely.</div>
+    </div>
+    <div class="feat-card reveal" style="animation-delay:0.25s">
+      <div class="feat-icon">🎯</div>
+      <div class="feat-title">Elective & Batch Support</div>
+      <div class="feat-desc">Select your electives and batch at first setup. The tracker automatically adjusts which subjects appear on your schedule each day.</div>
+    </div>
+    <div class="feat-card reveal" style="animation-delay:0.3s">
+      <div class="feat-icon">🎉</div>
+      <div class="feat-title">Holiday Management</div>
+      <div class="feat-desc">Mark holidays with one tap. Public holidays are excluded from attendance calculations so your percentage stays accurate.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── LIVE DEMO ── -->
+<section id="demo">
+  <div class="demo-container">
+    <div class="demo-text">
+      <div class="section-tag">Live Preview</div>
+      <h2 class="section-h2">Your attendance,<br><span class="drama">crystal clear.</span></h2>
+      <ul class="demo-points">
+        <li>See your current attendance percentage the moment you open the app — no calculations needed.</li>
+        <li>Color-coded subjects let you immediately spot which ones need attention and which are safe.</li>
+        <li>Offline-first architecture means it loads instantly, even on the college Wi-Fi's worst day.</li>
+        <li>Smart warnings alert you before you hit the 75% danger zone, not after.</li>
+      </ul>
+      <div style="margin-top:32px">
+        <a href="login.html" class="btn-hero btn-hero-main" style="display:inline-flex">
+          Try It Now — Free
+          <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div>
+    <div>
+      <div class="demo-phone">
+        <div class="phone-header">
+          <div class="phone-title">Overall Attendance</div>
+          <div class="phone-pct">75.4<span>%</span></div>
+          <div class="phone-bar"><div class="phone-bar-fill"></div></div>
         </div>
-    </div>
-
-    <!-- ─── Manual Setup Screen (Step 2) ─────────────────────────────────── -->
-    <div id="setup-screen-manual" class="screen hidden">
-        <div class="setup-container">
-            <div class="logo-wrapper">
-                <img src="assets/logo-new.jpg" alt="Institute Logo" class="app-logo">
-            </div>
-            <h1>Your Details ✏️</h1>
-            <p>Tell us about your college and department.</p>
-
-            <form id="setup-form-manual">
-                <div class="form-group">
-                    <label for="manual-college">College Name</label>
-                    <input type="text" id="manual-college" class="drawer-input" placeholder="e.g. Mumbai University" autocomplete="off" required>
-                    <span class="field-error hidden" id="err-college">Please enter your college name.</span>
-                </div>
-
-                <div class="form-group">
-                    <label for="manual-dept">Department Name</label>
-                    <input type="text" id="manual-dept" class="drawer-input" placeholder="e.g. Computer Engineering" autocomplete="off" required>
-                    <span class="field-error hidden" id="err-dept">Please enter your department name.</span>
-                </div>
-
-                <div class="form-group">
-                    <label for="manual-sem">Semester</label>
-                    <select id="manual-sem" class="drawer-input" required>
-                        <option value="">Select Semester…</option>
-                        <option value="1">Semester 1</option>
-                        <option value="2">Semester 2</option>
-                        <option value="3">Semester 3</option>
-                        <option value="4">Semester 4</option>
-                        <option value="5">Semester 5</option>
-                        <option value="6">Semester 6</option>
-                        <option value="7">Semester 7</option>
-                        <option value="8">Semester 8</option>
-                    </select>
-                    <span class="field-error hidden" id="err-sem">Please select a semester.</span>
-                </div>
-
-                <button type="submit" class="btn-primary">Save &amp; Continue →</button>
-            </form>
+        <div class="subject-row"><span><span class="sub-dot sub-good"></span><span class="sub-name">Mathematics</span></span><span class="sub-pct">82%</span></div>
+        <div class="subject-row"><span><span class="sub-dot sub-good"></span><span class="sub-name">Physics</span></span><span class="sub-pct">79%</span></div>
+        <div class="subject-row"><span><span class="sub-dot sub-warn"></span><span class="sub-name">Chemistry Lab</span></span><span class="sub-pct">76%</span></div>
+        <div class="subject-row"><span><span class="sub-dot sub-bad"></span><span class="sub-name">English</span></span><span class="sub-pct">71%</span></div>
+        <div class="subject-row"><span><span class="sub-dot sub-good"></span><span class="sub-name">CS Fundamentals</span></span><span class="sub-pct">88%</span></div>
+        <div style="margin-top:14px;padding:12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:12px;font-size:0.72rem;font-family:var(--font-mono);color:#fca5a5;display:flex;gap:8px;align-items:center">
+          ⚠ English is below 75% — attend next 3 classes
         </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── STATS ── -->
+<section id="stats">
+  <div class="stats-grid">
+    <div class="stat-cell reveal">
+      <div class="stat-n">500+</div>
+      <div class="stat-l">Active Students</div>
+    </div>
+    <div class="stat-cell reveal" style="animation-delay:0.1s">
+      <div class="stat-n">20K+</div>
+      <div class="stat-l">Classes Tracked</div>
+    </div>
+    <div class="stat-cell reveal" style="animation-delay:0.2s">
+      <div class="stat-n">99.9%</div>
+      <div class="stat-l">Uptime on Vercel</div>
+    </div>
+    <div class="stat-cell reveal" style="animation-delay:0.3s">
+      <div class="stat-n">0ms</div>
+      <div class="stat-l">Offline Load Time</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── HOW IT WORKS ── -->
+<section id="how">
+  <div class="section-tag">How It Works</div>
+  <h2 class="section-h2">From setup to <span class="drama">semester-ready</span></h2>
+  <div class="steps">
+    <div class="step reveal">
+      <div class="step-num">01 —</div>
+      <div class="step-body">
+        <div class="step-title">Sign Up & Configure</div>
+        <div class="step-desc">Create your account in under a minute. Select your batch, electives, and semester — the app builds your personalized timetable automatically.</div>
+      </div>
+    </div>
+    <div class="step reveal" style="animation-delay:0.1s">
+      <div class="step-num">02 —</div>
+      <div class="step-body">
+        <div class="step-title">Mark Attendance Daily</div>
+        <div class="step-desc">Each period shows up on your dashboard. Mark it present or absent with one tap. Lab sessions are automatically counted as multiple periods.</div>
+      </div>
+    </div>
+    <div class="step reveal" style="animation-delay:0.2s">
+      <div class="step-num">03 —</div>
+      <div class="step-body">
+        <div class="step-title">Track in Real-Time</div>
+        <div class="step-desc">Your overall and subject-wise attendance percentage updates instantly. Color-coded alerts warn you before you hit the danger zone.</div>
+      </div>
+    </div>
+    <div class="step reveal" style="animation-delay:0.3s">
+      <div class="step-num">04 —</div>
+      <div class="step-body">
+        <div class="step-title">Install & Go Offline</div>
+        <div class="step-desc">Install AttendIQ as a PWA on your phone home screen. Works completely offline — mark attendance even in the most remote lecture halls.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── MANIFESTO ── -->
+<section id="manifesto">
+  <div class="manifesto-label">// Our Philosophy</div>
+  <p class="manifesto-old">Most students calculate attendance with calculator apps and spreadsheets after it's already too late.</p>
+  <p class="manifesto-new">We give you <span class="key">real-time clarity</span>,<br>before the shortfall happens.</p>
+</section>
+
+<!-- ── PRICING ── -->
+<section id="pricing">
+  <div class="section-tag">Pricing</div>
+  <h2 class="section-h2">Simple, <span class="drama">student-friendly</span> plans</h2>
+  <p style="color:var(--muted);font-size:0.95rem;max-width:440px;font-weight:400;line-height:1.7;margin-top:8px">No hidden fees. No subscription traps. Pay once, track all semester.</p>
+  <div class="pricing-grid">
+    <!-- FREE -->
+    <div class="price-card reveal">
+      <div class="plan-name">Free</div>
+      <div class="plan-price"><sup>₹</sup>0<span class="period"> / forever</span></div>
+      <div class="plan-desc">Perfect to get started and explore all core tracking features.</div>
+      <ul class="plan-features">
+        <li>Period-wise attendance tracking</li>
+        <li>Overall percentage dashboard</li>
+        <li>Offline PWA support</li>
+        <li>Holiday marking</li>
+        <li class="crossed">Subject-wise analytics</li>
+        <li class="crossed">Priority support</li>
+      </ul>
+      <a href="register.html" class="btn-plan btn-plan-outline">Get Started Free</a>
     </div>
 
-    <!-- ─── Manual Timetable Builder Screen (Step 3) ─────────────────────── -->
-    <div id="setup-screen-manual-timetable" class="screen hidden">
-        <div class="manual-tt-container">
-            <div class="manual-tt-header">
-                <h1>Build Your Timetable 📅</h1>
-                <p>Add at least one subject for <strong>each day</strong> (Mon–Fri).</p>
-            </div>
-
-            <!-- Day sections rendered by JS via manualDays config -->
-            <div id="manual-days-wrapper"></div>
-
-            <div id="manual-tt-error" class="manual-tt-error hidden">⚠️ Every day must have at least one subject before you can continue.</div>
-
-            <button id="manual-tt-save-btn" class="btn-primary" style="margin-top:16px;">Save &amp; Continue →</button>
-        </div>
+    <!-- PRO — Featured -->
+    <div class="price-card featured reveal" style="animation-delay:0.1s">
+      <div class="badge">Most Popular</div>
+      <div class="plan-name">Pro</div>
+      <div class="plan-price"><sup>₹</sup>10<span class="period"> / month</span></div>
+      <div class="plan-desc">Unlock full analytics and smart alerts. Everything a serious student needs.</div>
+      <ul class="plan-features">
+        <li>Everything in Free</li>
+        <li>Subject-wise detailed analytics</li>
+        <li>Smart shortage warnings</li>
+        <li>Elective & batch rotation</li>
+        <li>Attendance history export</li>
+        <li>Email support</li>
+      </ul>
+      <a href="plans.html" class="btn-plan btn-plan-fill">Upgrade for ₹10</a>
     </div>
 
-    <!-- ─── Add Subject Modal (Manual Mode) ──────────────────────────────── -->
-    <div id="add-subject-modal" class="modal-overlay hidden">
-        <div class="modal-content add-subject-modal-content">
-            <h3>Add Subject</h3>
-            <p id="add-subject-modal-day-label" style="color:var(--primary);font-weight:600;margin-bottom:16px;"></p>
-
-            <div class="form-group">
-                <label for="modal-course-code">Course Code</label>
-                <input type="text" id="modal-course-code" class="drawer-input" placeholder="e.g. CS301" autocomplete="off">
-                <span class="field-error hidden" id="err-modal-code">Course Code is required.</span>
-            </div>
-
-            <div class="form-group">
-                <label for="modal-course-name">Course Name</label>
-                <input type="text" id="modal-course-name" class="drawer-input" placeholder="e.g. Data Structures" autocomplete="off">
-                <span class="field-error hidden" id="err-modal-name">Course Name is required.</span>
-            </div>
-
-            <div style="display:flex;gap:10px;margin-top:8px;">
-                <button id="modal-cancel-btn" class="btn-secondary" style="flex:1;">Cancel</button>
-                <button id="modal-save-btn" class="btn-primary" style="flex:1;margin-top:0;">Save Subject</button>
-            </div>
-        </div>
+    <!-- ELITE -->
+    <div class="price-card reveal" style="animation-delay:0.2s">
+      <div class="plan-name">Elite</div>
+      <div class="plan-price"><sup>₹</sup>29<span class="period"> / semester</span></div>
+      <div class="plan-desc">Best value for the entire semester. Includes every feature, no limits.</div>
+      <ul class="plan-features">
+        <li>Everything in Pro</li>
+        <li>Semester-long coverage</li>
+        <li>Advanced predictive alerts</li>
+        <li>Multi-batch support</li>
+        <li>Data backup & restore</li>
+        <li>Priority support</li>
+      </ul>
+      <a href="plans.html" class="btn-plan btn-plan-outline">Go Elite — ₹29</a>
     </div>
+  </div>
+</section>
 
-    <!-- Setup Screen (IT) -->
-    <div id="setup-screen" class="screen hidden">
-        <div class="setup-container">
-            <div class="logo-wrapper">
-                <img src="assets/logo-new.jpg" alt="Institute Logo" class="app-logo">
-            </div>
-            <h1>Welcome 👋</h1>
-            <p>Let's set up your profile to get started.</p>
-
-            <form id="setup-form">
-                <div class="form-group">
-                    <label>IT Elective – Group A</label>
-                    <div class="radio-group">
-                        <label class="radio-card">
-                            <input type="radio" name="it_elective_a" value="ITDX 45" required>
-                            <span>ITDX 45 – Big Data Analytics</span>
-                        </label>
-                        <label class="radio-card">
-                            <input type="radio" name="it_elective_a" value="ITDX 11" required>
-                            <span>ITDX 11 – Intro to DevOps</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>IT Elective – Group B</label>
-                    <div class="radio-group">
-                        <label class="radio-card">
-                            <input type="radio" name="it_elective_b" value="ITDX 42" required>
-                            <span>ITDX 42 – Programming in R</span>
-                        </label>
-                        <label class="radio-card">
-                            <input type="radio" name="it_elective_b" value="ITDX 29" required>
-                            <span>ITDX 29 – Industry 4.0 & IIoT</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>SSDX Elective</label>
-                    <div class="radio-group">
-                        <label class="radio-card">
-                            <input type="radio" name="ssdx_elective" value="SSDX 11" required>
-                            <span>SSDX 11 – Economics of Sustainable Development</span>
-                        </label>
-                        <label class="radio-card">
-                            <input type="radio" name="ssdx_elective" value="SSDX 12" required>
-                            <span>SSDX 12 – Sociology of Industrial Relations</span>
-                        </label>
-                        <label class="radio-card">
-                            <input type="radio" name="ssdx_elective" value="SSDX 13" required>
-                            <span>SSDX 13 – Professional Ethics and Human Values</span>
-                        </label>
-                        <label class="radio-card">
-                            <input type="radio" name="ssdx_elective" value="SSDX 14" required>
-                            <span>SSDX 14 – Gender, Technology and Development</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Batch</label>
-                    <div class="radio-group horizontal">
-                        <label class="radio-card">
-                            <input type="radio" name="batch" value="1" required>
-                            <span>Batch 1</span>
-                        </label>
-                        <label class="radio-card">
-                            <input type="radio" name="batch" value="2" required>
-                            <span>Batch 2</span>
-                        </label>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-primary">Get Started</button>
-            </form>
-        </div>
+<!-- ── TESTIMONIALS ── -->
+<section id="testimonials">
+  <div class="section-tag">Testimonials</div>
+  <h2 class="section-h2">Students <span class="drama">love it</span></h2>
+  <div class="testi-grid">
+    <div class="testi-card reveal">
+      <div class="testi-stars">★★★★★</div>
+      <div class="testi-text">"I used to manually calculate my attendance every week. AttendIQ just shows it to me automatically. The warning system literally saved me in Chemistry."</div>
+      <div class="testi-author"><div class="testi-avatar">A</div><div><div class="testi-name">Arun K.</div><div class="testi-role">3rd Year IT — Crescent</div></div></div>
     </div>
-
-    <!-- Setup Screen (BIO) -->
-    <div id="setup-screen-bio" class="screen hidden">
-        <div class="setup-container">
-            <div class="logo-wrapper">
-                <img src="assets/logo-new.jpg" alt="Institute Logo" class="app-logo">
-            </div>
-            <h1>Setup (Biotech)</h1>
-            <p>Select your electives.</p>
-
-            <form id="setup-form-bio">
-                <div class="form-group">
-                    <label>Biotechnology Elective (PE)</label>
-                    <div class="radio-group">
-                        <label class="radio-card">
-                            <input type="radio" name="bio_elective" value="BTDX 31" required>
-                            <span>BTDX 31 – Intellectual Property Rights</span>
-                        </label>
-                        <label class="radio-card">
-                            <input type="radio" name="bio_elective" value="BTDX 37" required>
-                            <span>BTDX 37 – Stem Cell Technology</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Social Science Elective (SS)</label>
-                    <div class="radio-group">
-                        <label class="radio-card">
-                            <input type="radio" name="ssdx_elective" value="SSDX 11" required>
-                            <span>SSDX 11 – Economics of Sustainable Development</span>
-                        </label>
-                        <label class="radio-card">
-                            <input type="radio" name="ssdx_elective" value="SSDX 12" required>
-                            <span>SSDX 12 – Sociology of Industrial Relations</span>
-                        </label>
-                        <label class="radio-card">
-                            <input type="radio" name="ssdx_elective" value="SSDX 13" required>
-                            <span>SSDX 13 – Professional Ethics and Human Values</span>
-                        </label>
-                        <label class="radio-card">
-                            <input type="radio" name="ssdx_elective" value="SSDX 14" required>
-                            <span>SSDX 14 – Gender, Technology and Development</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Open Elective (GE)</label>
-                    <div class="radio-group">
-                        <label class="radio-card">
-                            <input type="radio" name="chem_elective" value="GEDX 207" required>
-                            <span>GEDX 207 – Cyber Forensics</span>
-                        </label>
-                        <label class="radio-card">
-                            <input type="radio" name="chem_elective" value="GEDX 208" required>
-                            <span>GEDX 208 – Cyber Security</span>
-                        </label>
-                        <label class="radio-card">
-                            <input type="radio" name="chem_elective" value="GEDX 209" required>
-                            <span>GEDX 209 – Disaster Management</span>
-                        </label>
-                        <label class="radio-card">
-                            <input type="radio" name="chem_elective" value="GEDX 112" required>
-                            <span>GEDX 112 – Electric Vehicle</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Batch</label>
-                    <div class="radio-group horizontal">
-                        <label class="radio-card">
-                            <input type="radio" name="batch" value="1" required>
-                            <span>Batch 1</span>
-                        </label>
-                        <label class="radio-card">
-                            <input type="radio" name="batch" value="2" required>
-                            <span>Batch 2</span>
-                        </label>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-primary">Get Started</button>
-            </form>
-        </div>
+    <div class="testi-card reveal" style="animation-delay:0.1s">
+      <div class="testi-stars">★★★★★</div>
+      <div class="testi-text">"Works offline in our college's bad network zones. Installed it as an app on my phone. The period-wise tracking is so accurate compared to any other app I tried."</div>
+      <div class="testi-author"><div class="testi-avatar">S</div><div><div class="testi-name">Sana M.</div><div class="testi-role">2nd Year CSE — Crescent</div></div></div>
     </div>
-
-
-
-    <!-- App Screen -->
-    <div id="app-screen" class="screen hidden">
-        <header class="app-header">
-            <div class="header-top">
-                <button id="prev-month" class="icon-btn">◀</button>
-                <h1 id="month-display">January</h1>
-                <button id="next-month" class="icon-btn">▶</button>
-
-                <div class="header-right">
-                    <span id="plan-badge" class="plan-badge hidden"></span>
-                    <button id="theme-toggle" class="icon-btn" aria-label="Toggle Theme">🌙</button>
-                    <button id="reset-btn" class="icon-btn" aria-label="Reset Setup">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                            <path d="M3 3v5h5" />
-                        </svg>
-                    </button>
-                    <button id="notes-trigger" class="icon-btn" aria-label="Notes">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                        </svg>
-                    </button>
-                    <!-- Profile chip: shows user name + sub days — injected/updated by JS -->
-                    <button id="profile-trigger" class="profile-chip" aria-label="Profile">
-                        <div id="profile-chip-avatar" class="chip-avatar">U</div>
-                        <div class="chip-info">
-                            <span id="chip-name" class="chip-name">Loading…</span>
-                            <span id="chip-sub" class="chip-sub"></span>
-                        </div>
-                    </button>
-                </div>
-            </div>
-
-            <div class="date-picker-wrapper">
-                <div id="date-scroll" class="date-scroll">
-                    <!-- Dates injected via JS -->
-                </div>
-            </div>
-        </header>
-
-        <main id="main-content">
-            <div id="subjects-container" class="subjects-list">
-                <!-- Subject cards injected via JS -->
-                <div class="empty-state">Select a date to view classes</div>
-            </div>
-        </main>
-
-        <section class="stats-overview">
-            <h2>Attendance Overview</h2>
-            <div class="overall-progress">
-                <div class="circular-chart" id="overall-chart">
-                    <!-- SVG Chart -->
-                </div>
-                <div class="overall-text">
-                    <span id="overall-percentage">0%</span>
-                    <small>Total Attendance</small>
-                </div>
-            </div>
-            <div id="subject-stats-list" class="subject-stats-list">
-                <!-- Stats rows -->
-            </div>
-        </section>
+    <div class="testi-card reveal" style="animation-delay:0.2s">
+      <div class="testi-stars">★★★★★</div>
+      <div class="testi-text">"The elective and batch handling is what impressed me. Every other tracker assumes you have the same subjects — this one actually understands how our timetable works."</div>
+      <div class="testi-author"><div class="testi-avatar">R</div><div><div class="testi-name">Rahul V.</div><div class="testi-role">4th Year ECE — Crescent</div></div></div>
     </div>
+  </div>
+</section>
 
-    <!-- Detailed History Screen -->
-    <div id="history-screen" class="screen hidden">
-        <header class="app-header">
-            <div class="header-top">
-                <button id="back-from-history" class="icon-btn">◀ Back</button>
-                <h1>History</h1>
-                <div style="width: 40px;"></div> <!-- Spacer -->
-            </div>
-            <div class="filter-bar">
-                <button class="filter-btn active" data-filter="all">All</button>
-                <button class="filter-btn" data-filter="P">Present</button>
-                <button class="filter-btn" data-filter="A">Absent</button>
-            </div>
-        </header>
-        <main class="history-list" id="history-list">
-            <!-- Injected via JS -->
-        </main>
+<!-- ── FAQ ── -->
+<section id="faq">
+  <div class="section-tag">FAQ</div>
+  <h2 class="section-h2">Quick <span class="drama">answers</span></h2>
+  <div class="faq-list">
+    <div class="faq-item reveal">
+      <div class="faq-q">Is my attendance data stored on a server? <span class="faq-icon">+</span></div>
+      <div class="faq-a"><div class="faq-a-inner">No. All your data is stored locally on your device using LocalStorage. There is no cloud sync, no data collection, and no servers involved. Your data is entirely private.</div></div>
     </div>
-
-    <!-- Notes Screen -->
-    <div id="notes-screen" class="screen hidden">
-        <header class="app-header">
-            <div class="header-top">
-                <button id="back-from-notes" class="icon-btn">◀ Back</button>
-                <h1>Notes</h1>
-                <div style="width: 40px;"></div>
-            </div>
-        </header>
-        <main class="notes-container">
-            <select id="notes-subject-select" class="drawer-input">
-                <option value="">Select Subject...</option>
-                <!-- Filled via JS -->
-            </select>
-            <textarea id="notes-area" class="notes-area" placeholder="Write your notes here..."></textarea>
-            <div id="notes-status" class="notes-status">Saved</div>
-        </main>
+    <div class="faq-item reveal" style="animation-delay:0.05s">
+      <div class="faq-q">Can I use it without installing it as an app? <span class="faq-icon">+</span></div>
+      <div class="faq-a"><div class="faq-a-inner">Yes! AttendIQ runs in any mobile or desktop browser at students-erp.vercel.app. You can optionally install it as a PWA from your browser for a faster, app-like experience with offline support.</div></div>
     </div>
-
-    <!-- Saturday Selection Modal -->
-    <div id="saturday-modal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h3>Select Timetable for Saturday</h3>
-            <p>Choose a weekday timetable to apply for this date:</p>
-            <div class="day-options">
-                <button class="day-btn" onclick="applySaturday(1)">Monday</button>
-                <button class="day-btn" onclick="applySaturday(2)">Tuesday</button>
-                <button class="day-btn" onclick="applySaturday(3)">Wednesday</button>
-                <button class="day-btn" onclick="applySaturday(4)">Thursday</button>
-                <button class="day-btn" onclick="applySaturday(5)">Friday</button>
-            </div>
-            <button class="btn-secondary" onclick="closeSaturdayModal()">Cancel</button>
-        </div>
+    <div class="faq-item reveal" style="animation-delay:0.1s">
+      <div class="faq-q">How does it handle lab sessions? <span class="faq-icon">+</span></div>
+      <div class="faq-a"><div class="faq-a-inner">Long lab blocks are automatically split into multiple individual periods. So a 3-hour lab counts as 3 attendance periods — exactly like your college does it.</div></div>
     </div>
-
-    <!-- Profile Drawer -->
-    <div id="profile-overlay" class="drawer-overlay hidden"></div>
-    <div id="profile-drawer" class="drawer">
-        <div class="drawer-header">
-            <h2>Profile</h2>
-            <button id="close-profile" class="icon-btn">✕</button>
-        </div>
-        <div class="drawer-content">
-            <div class="profile-upload">
-                <input type="file" id="avatar-input" accept="image/*" hidden>
-                <div id="avatar-preview" class="profile-preview">
-                    <!-- JS Injected -->
-                </div>
-                <label for="avatar-input" class="upload-label">Change Photo</label>
-            </div>
-
-            <div class="form-group">
-                <label>Display Name (Optional)</label>
-                <input type="text" id="profile-name" class="drawer-input" placeholder="e.g. John Doe">
-            </div>
-
-            <button id="save-profile-btn" class="btn-primary">Save Profile</button>
-            <button id="change-timetable-btn" class="profile-action-row danger">🔄 Change Timetable</button>
-        </div>
+    <div class="faq-item reveal" style="animation-delay:0.15s">
+      <div class="faq-q">What happens if I clear my browser data? <span class="faq-icon">+</span></div>
+      <div class="faq-a"><div class="faq-a-inner">Since data is stored in LocalStorage, clearing your browser data will remove your attendance records. We recommend using the Elite plan's backup feature to keep a copy safe.</div></div>
     </div>
-
-    <!-- Subscription Lock Overlay -->
-    <div id="subscription-overlay" class="subscription-overlay hidden">
-        <div class="subscription-card">
-            <div class="lock-icon">🔒</div>
-            <h2 class="lock-title">Your Trial Has Ended</h2>
-            <p class="lock-subtitle">Upgrade to continue tracking attendance</p>
-
-            <div class="lock-plan-info">
-                <span id="lock-plan-name">Trial</span>
-                <span id="lock-expiry-text"></span>
-            </div>
-
-            <div class="upgrade-options">
-                <button class="upgrade-btn upgrade-monthly" id="upgrade-monthly-btn">
-                    <span class="upgrade-plan-name">Monthly</span>
-                    <span class="upgrade-price">₹10 / month</span>
-                    <span class="upgrade-desc">Full access for 30 days</span>
-                </button>
-                <button class="upgrade-btn upgrade-semester" id="upgrade-semester-btn">
-                    <span class="upgrade-plan-name">Semester ⭐</span>
-                    <span class="upgrade-price">₹29 / 6 months</span>
-                    <span class="upgrade-desc">Best value — save 52%</span>
-                </button>
-            </div>
-
-            <button class="lock-logout-btn" id="lock-logout-btn">
-                Sign out &rarr;
-            </button>
-        </div>
+    <div class="faq-item reveal" style="animation-delay:0.2s">
+      <div class="faq-q">Is the Pro plan really just ₹10? <span class="faq-icon">+</span></div>
+      <div class="faq-a"><div class="faq-a-inner">Yes — ₹10 per month for the Pro plan, and ₹29 for the entire semester with the Elite plan. Payments are handled securely through Razorpay. No auto-renewal without your consent.</div></div>
     </div>
+  </div>
+</section>
 
-    <!-- ─── Reset Timetable Modal ──────────────────────────────────────────── -->
-    <div id="reset-timetable-modal" class="modal-overlay hidden">
-        <div class="modal-content reset-tt-modal-content">
-            <h3>Reset Timetable</h3>
-            <p class="reset-tt-desc">This will remove your current timetable setup.<br>Your subscription will not be affected.</p>
+<!-- ── CTA BAND ── -->
+<section id="cta">
+  <div class="big-h">Stop guessing.<br><span class="drama" style="background:linear-gradient(135deg,var(--pulse),var(--neon));-webkit-background-clip:text;-webkit-text-fill-color:transparent">Start knowing.</span></div>
+  <p class="big-sub">Join 500+ Crescent students who never miss their 75% attendance target.</p>
+  <a href="login.html" class="btn-hero btn-hero-main" style="display:inline-flex;font-size:1rem;padding:16px 40px">
+    Get Started — It's Free
+    <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:20px;height:20px"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+  </a>
+</section>
 
-            <div class="form-group" style="margin-top:16px;">
-                <label for="reset-password-input">Password</label>
-                <input type="password" id="reset-password-input" class="drawer-input" placeholder="Enter your account password" autocomplete="current-password">
-                <span class="field-error hidden" id="err-reset-password">Incorrect password. Please try again.</span>
-            </div>
-
-            <div class="reset-tt-actions">
-                <button id="reset-tt-cancel-btn" class="btn-secondary" style="flex:1;">Cancel</button>
-                <button id="reset-tt-confirm-btn" class="btn-danger" style="flex:1;">Confirm Reset</button>
-            </div>
-        </div>
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="footer-logo">AttendIQ</div>
+      <div class="footer-tagline">Smart attendance tracking for students at B.S. Abdur Rahman Crescent Institute of Science and Technology.</div>
     </div>
+    <div class="footer-col">
+      <h4>Product</h4>
+      <a href="#features">Features</a>
+      <a href="#demo">How It Works</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <div class="footer-col">
+      <h4>Account</h4>
+      <a href="login.html">Login</a>
+      <a href="register.html">Sign Up</a>
+      <a href="plans.html">Upgrade Plan</a>
+    </div>
+    <div class="footer-col">
+      <h4>Connect</h4>
+      <a href="https://github.com/JafranTech" target="_blank">GitHub</a>
+      <a href="#faq">Contact</a>
+      <a href="#">Privacy</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="status-pill"><span class="status-dot"></span> All Systems Operational</div>
+    <div class="footer-legal">© 2025 AttendIQ · Built with ♥ for Crescent students</div>
+  </div>
+</footer>
 
-    <script src="app.js"></script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('service-worker.js')
-                .then(reg => console.log('SW Registered'))
-                .catch(err => console.error('SW Error', err));
-        }
-    </script>
+<script>
+  gsap.registerPlugin(ScrollTrigger);
+
+  // ── Custom Cursor ──
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursor-ring');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+  document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+  function animCursor() {
+    cursor.style.left = mx + 'px'; cursor.style.top = my + 'px';
+    rx += (mx - rx) * 0.12; ry += (my - ry) * 0.12;
+    ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+    requestAnimationFrame(animCursor);
+  }
+  animCursor();
+
+  // ── Navbar scroll morph ──
+  const nav = document.getElementById('navbar');
+  ScrollTrigger.create({
+    start: 'top -60',
+    onUpdate: self => nav.classList.toggle('scrolled', self.progress > 0)
+  });
+
+  // ── Hero entrance ──
+  const ctx = gsap.context(() => {
+    gsap.from('.hero-tag', { y: 30, opacity: 0, duration: 0.8, ease: 'power3.out', delay: 0.3 });
+    gsap.from('.hero-h1 .line1', { y: 50, opacity: 0, duration: 0.9, ease: 'power3.out', delay: 0.5 });
+    gsap.from('.hero-h1 .line2', { y: 50, opacity: 0, duration: 0.9, ease: 'power3.out', delay: 0.65 });
+    gsap.from('.hero-sub', { y: 30, opacity: 0, duration: 0.8, ease: 'power3.out', delay: 0.85 });
+    gsap.from('.hero-ctas', { y: 30, opacity: 0, duration: 0.8, ease: 'power3.out', delay: 1.0 });
+    gsap.from('.sf-1', { x: 40, opacity: 0, duration: 1, ease: 'power3.out', delay: 1.2 });
+    gsap.from('.sf-2', { x: 40, opacity: 0, duration: 1, ease: 'power3.out', delay: 1.4 });
+    gsap.from('.sf-3', { x: 40, opacity: 0, duration: 1, ease: 'power3.out', delay: 1.6 });
+  });
+
+  // ── Reveal on scroll ──
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+  }, { threshold: 0.15 });
+  reveals.forEach(el => observer.observe(el));
+
+  // ── Stat counter animation ──
+  const statNums = document.querySelectorAll('.stat-n');
+  const statObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const el = e.target;
+        const target = parseFloat(el.textContent);
+        const suffix = el.textContent.replace(/[0-9.]/g, '');
+        let start = 0;
+        const step = target / 50;
+        const timer = setInterval(() => {
+          start = Math.min(start + step, target);
+          el.textContent = (Number.isInteger(target) ? Math.floor(start) : start.toFixed(1)) + suffix;
+          if (start >= target) clearInterval(timer);
+        }, 25);
+        statObs.unobserve(el);
+      }
+    });
+  }, { threshold: 0.5 });
+  statNums.forEach(el => statObs.observe(el));
+
+  // ── Parallax orbs ──
+  window.addEventListener('mousemove', e => {
+    const x = (e.clientX / window.innerWidth - 0.5) * 20;
+    const y = (e.clientY / window.innerHeight - 0.5) * 20;
+    document.querySelectorAll('.orb').forEach((orb, i) => {
+      const factor = (i + 1) * 0.4;
+      orb.style.transform = `translate(${x * factor}px, ${y * factor}px)`;
+    });
+  });
+
+  // ── Feature card mouse glow ──
+  document.querySelectorAll('.feat-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const rect = card.getBoundingClientRect();
+      card.style.setProperty('--mx', ((e.clientX - rect.left) / rect.width * 100) + '%');
+      card.style.setProperty('--my', ((e.clientY - rect.top) / rect.height * 100) + '%');
+    });
+  });
+
+  // ── FAQ accordion ──
+  document.querySelectorAll('.faq-item').forEach(item => {
+    item.querySelector('.faq-q').addEventListener('click', () => {
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+      if (!isOpen) item.classList.add('open');
+    });
+  });
+
+  // ── Smooth scroll ──
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    });
+  });
+
+  // ── GSAP ScrollTrigger parallax manifesto ──
+  gsap.from('#manifesto .manifesto-old', { scrollTrigger: { trigger: '#manifesto', start: 'top 80%' }, y: 30, opacity: 0, duration: 0.8, ease: 'power3.out' });
+  gsap.from('#manifesto .manifesto-new', { scrollTrigger: { trigger: '#manifesto', start: 'top 70%' }, y: 40, opacity: 0, duration: 1, ease: 'power3.out', delay: 0.2 });
+</script>
 </body>
-
 </html>

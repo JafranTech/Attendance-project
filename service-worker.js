@@ -1,7 +1,8 @@
-const CACHE_NAME = 'attend-app-v9';
+const CACHE_NAME = 'attend-app-v10';
 const ASSETS = [
     './',
     './index.html',
+    './dashboard.html',
     './style.css',
     './app.js',
     './manifest.json',

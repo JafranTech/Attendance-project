@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Student Attendance</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/jpeg" href="assets/logo-new.jpg">
+    <link rel="apple-touch-icon" href="assets/logo-new.jpg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Load Razorpay SDK -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
+</head>
+
+<body>
+
+    <!-- Department Screen -->
+    <div id="department-screen" class="screen hidden">
+        <div class="setup-container">
+            <div class="logo-wrapper">
+                <img src="assets/logo-new.jpg" alt="Institute Logo" class="app-logo">
+            </div>
+            <h1>Department</h1>
+            <p>Please select your department.</p>
+
+            <form id="department-form">
+                <div class="form-group">
+                    <div class="radio-group">
+                        <label class="radio-card">
+                            <input type="radio" name="dept" value="IT" required>
+                            <span>Information Technology</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="dept" value="BIO" required>
+                            <span>Biotechnology</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="dept" value="MANUAL" required>
+                            <span>Manual Timetable <small style="display:block;font-weight:400;font-size:0.8rem;color:var(--text-secondary)"></small></span>
+                        </label>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary">Next</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ─── Manual Setup Screen (Step 2) ─────────────────────────────────── -->
+    <div id="setup-screen-manual" class="screen hidden">
+        <div class="setup-container">
+            <div class="logo-wrapper">
+                <img src="assets/logo-new.jpg" alt="Institute Logo" class="app-logo">
+            </div>
+            <h1>Your Details ✏️</h1>
+            <p>Tell us about your college and department.</p>
+
+            <form id="setup-form-manual">
+                <div class="form-group">
+                    <label for="manual-college">College Name</label>
+                    <input type="text" id="manual-college" class="drawer-input" placeholder="e.g. Mumbai University" autocomplete="off" required>
+                    <span class="field-error hidden" id="err-college">Please enter your college name.</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="manual-dept">Department Name</label>
+                    <input type="text" id="manual-dept" class="drawer-input" placeholder="e.g. Computer Engineering" autocomplete="off" required>
+                    <span class="field-error hidden" id="err-dept">Please enter your department name.</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="manual-sem">Semester</label>
+                    <select id="manual-sem" class="drawer-input" required>
+                        <option value="">Select Semester…</option>
+                        <option value="1">Semester 1</option>
+                        <option value="2">Semester 2</option>
+                        <option value="3">Semester 3</option>
+                        <option value="4">Semester 4</option>
+                        <option value="5">Semester 5</option>
+                        <option value="6">Semester 6</option>
+                        <option value="7">Semester 7</option>
+                        <option value="8">Semester 8</option>
+                    </select>
+                    <span class="field-error hidden" id="err-sem">Please select a semester.</span>
+                </div>
+
+                <button type="submit" class="btn-primary">Save &amp; Continue →</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ─── Manual Timetable Builder Screen (Step 3) ─────────────────────── -->
+    <div id="setup-screen-manual-timetable" class="screen hidden">
+        <div class="manual-tt-container">
+            <div class="manual-tt-header">
+                <h1>Build Your Timetable 📅</h1>
+                <p>Add at least one subject for <strong>each day</strong> (Mon–Fri).</p>
+            </div>
+
+            <!-- Day sections rendered by JS via manualDays config -->
+            <div id="manual-days-wrapper"></div>
+
+            <div id="manual-tt-error" class="manual-tt-error hidden">⚠️ Every day must have at least one subject before you can continue.</div>
+
+            <button id="manual-tt-save-btn" class="btn-primary" style="margin-top:16px;">Save &amp; Continue →</button>
+        </div>
+    </div>
+
+    <!-- ─── Add Subject Modal (Manual Mode) ──────────────────────────────── -->
+    <div id="add-subject-modal" class="modal-overlay hidden">
+        <div class="modal-content add-subject-modal-content">
+            <h3>Add Subject</h3>
+            <p id="add-subject-modal-day-label" style="color:var(--primary);font-weight:600;margin-bottom:16px;"></p>
+
+            <div class="form-group">
+                <label for="modal-course-code">Course Code</label>
+                <input type="text" id="modal-course-code" class="drawer-input" placeholder="e.g. CS301" autocomplete="off">
+                <span class="field-error hidden" id="err-modal-code">Course Code is required.</span>
+            </div>
+
+            <div class="form-group">
+                <label for="modal-course-name">Course Name</label>
+                <input type="text" id="modal-course-name" class="drawer-input" placeholder="e.g. Data Structures" autocomplete="off">
+                <span class="field-error hidden" id="err-modal-name">Course Name is required.</span>
+            </div>
+
+            <div style="display:flex;gap:10px;margin-top:8px;">
+                <button id="modal-cancel-btn" class="btn-secondary" style="flex:1;">Cancel</button>
+                <button id="modal-save-btn" class="btn-primary" style="flex:1;margin-top:0;">Save Subject</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Setup Screen (IT) -->
+    <div id="setup-screen" class="screen hidden">
+        <div class="setup-container">
+            <div class="logo-wrapper">
+                <img src="assets/logo-new.jpg" alt="Institute Logo" class="app-logo">
+            </div>
+            <h1>Welcome 👋</h1>
+            <p>Let's set up your profile to get started.</p>
+
+            <form id="setup-form">
+                <div class="form-group">
+                    <label>IT Elective – Group A</label>
+                    <div class="radio-group">
+                        <label class="radio-card">
+                            <input type="radio" name="it_elective_a" value="ITDX 45" required>
+                            <span>ITDX 45 – Big Data Analytics</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="it_elective_a" value="ITDX 11" required>
+                            <span>ITDX 11 – Intro to DevOps</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>IT Elective – Group B</label>
+                    <div class="radio-group">
+                        <label class="radio-card">
+                            <input type="radio" name="it_elective_b" value="ITDX 42" required>
+                            <span>ITDX 42 – Programming in R</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="it_elective_b" value="ITDX 29" required>
+                            <span>ITDX 29 – Industry 4.0 & IIoT</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>SSDX Elective</label>
+                    <div class="radio-group">
+                        <label class="radio-card">
+                            <input type="radio" name="ssdx_elective" value="SSDX 11" required>
+                            <span>SSDX 11 – Economics of Sustainable Development</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="ssdx_elective" value="SSDX 12" required>
+                            <span>SSDX 12 – Sociology of Industrial Relations</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="ssdx_elective" value="SSDX 13" required>
+                            <span>SSDX 13 – Professional Ethics and Human Values</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="ssdx_elective" value="SSDX 14" required>
+                            <span>SSDX 14 – Gender, Technology and Development</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Batch</label>
+                    <div class="radio-group horizontal">
+                        <label class="radio-card">
+                            <input type="radio" name="batch" value="1" required>
+                            <span>Batch 1</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="batch" value="2" required>
+                            <span>Batch 2</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary">Get Started</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Setup Screen (BIO) -->
+    <div id="setup-screen-bio" class="screen hidden">
+        <div class="setup-container">
+            <div class="logo-wrapper">
+                <img src="assets/logo-new.jpg" alt="Institute Logo" class="app-logo">
+            </div>
+            <h1>Setup (Biotech)</h1>
+            <p>Select your electives.</p>
+
+            <form id="setup-form-bio">
+                <div class="form-group">
+                    <label>Biotechnology Elective (PE)</label>
+                    <div class="radio-group">
+                        <label class="radio-card">
+                            <input type="radio" name="bio_elective" value="BTDX 31" required>
+                            <span>BTDX 31 – Intellectual Property Rights</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="bio_elective" value="BTDX 37" required>
+                            <span>BTDX 37 – Stem Cell Technology</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Social Science Elective (SS)</label>
+                    <div class="radio-group">
+                        <label class="radio-card">
+                            <input type="radio" name="ssdx_elective" value="SSDX 11" required>
+                            <span>SSDX 11 – Economics of Sustainable Development</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="ssdx_elective" value="SSDX 12" required>
+                            <span>SSDX 12 – Sociology of Industrial Relations</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="ssdx_elective" value="SSDX 13" required>
+                            <span>SSDX 13 – Professional Ethics and Human Values</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="ssdx_elective" value="SSDX 14" required>
+                            <span>SSDX 14 – Gender, Technology and Development</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Open Elective (GE)</label>
+                    <div class="radio-group">
+                        <label class="radio-card">
+                            <input type="radio" name="chem_elective" value="GEDX 207" required>
+                            <span>GEDX 207 – Cyber Forensics</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="chem_elective" value="GEDX 208" required>
+                            <span>GEDX 208 – Cyber Security</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="chem_elective" value="GEDX 209" required>
+                            <span>GEDX 209 – Disaster Management</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="chem_elective" value="GEDX 112" required>
+                            <span>GEDX 112 – Electric Vehicle</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Batch</label>
+                    <div class="radio-group horizontal">
+                        <label class="radio-card">
+                            <input type="radio" name="batch" value="1" required>
+                            <span>Batch 1</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="batch" value="2" required>
+                            <span>Batch 2</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary">Get Started</button>
+            </form>
+        </div>
+    </div>
+
+
+
+    <!-- App Screen -->
+    <div id="app-screen" class="screen hidden">
+        <header class="app-header">
+            <div class="header-top">
+                <button id="prev-month" class="icon-btn">◀</button>
+                <h1 id="month-display">January</h1>
+                <button id="next-month" class="icon-btn">▶</button>
+
+                <div class="header-right">
+                    <span id="plan-badge" class="plan-badge hidden"></span>
+                    <button id="theme-toggle" class="icon-btn" aria-label="Toggle Theme">🌙</button>
+                    <button id="reset-btn" class="icon-btn" aria-label="Reset Setup">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                            <path d="M3 3v5h5" />
+                        </svg>
+                    </button>
+                    <button id="notes-trigger" class="icon-btn" aria-label="Notes">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                    </button>
+                    <!-- Profile chip: shows user name + sub days — injected/updated by JS -->
+                    <button id="profile-trigger" class="profile-chip" aria-label="Profile">
+                        <div id="profile-chip-avatar" class="chip-avatar">U</div>
+                        <div class="chip-info">
+                            <span id="chip-name" class="chip-name">Loading…</span>
+                            <span id="chip-sub" class="chip-sub"></span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <div class="date-picker-wrapper">
+                <div id="date-scroll" class="date-scroll">
+                    <!-- Dates injected via JS -->
+                </div>
+            </div>
+        </header>
+
+        <main id="main-content">
+            <div id="subjects-container" class="subjects-list">
+                <!-- Subject cards injected via JS -->
+                <div class="empty-state">Select a date to view classes</div>
+            </div>
+        </main>
+
+        <section class="stats-overview">
+            <h2>Attendance Overview</h2>
+            <div class="overall-progress">
+                <div class="circular-chart" id="overall-chart">
+                    <!-- SVG Chart -->
+                </div>
+                <div class="overall-text">
+                    <span id="overall-percentage">0%</span>
+                    <small>Total Attendance</small>
+                </div>
+            </div>
+            <div id="subject-stats-list" class="subject-stats-list">
+                <!-- Stats rows -->
+            </div>
+        </section>
+    </div>
+
+    <!-- Detailed History Screen -->
+    <div id="history-screen" class="screen hidden">
+        <header class="app-header">
+            <div class="header-top">
+                <button id="back-from-history" class="icon-btn">◀ Back</button>
+                <h1>History</h1>
+                <div style="width: 40px;"></div> <!-- Spacer -->
+            </div>
+            <div class="filter-bar">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="P">Present</button>
+                <button class="filter-btn" data-filter="A">Absent</button>
+            </div>
+        </header>
+        <main class="history-list" id="history-list">
+            <!-- Injected via JS -->
+        </main>
+    </div>
+
+    <!-- Notes Screen -->
+    <div id="notes-screen" class="screen hidden">
+        <header class="app-header">
+            <div class="header-top">
+                <button id="back-from-notes" class="icon-btn">◀ Back</button>
+                <h1>Notes</h1>
+                <div style="width: 40px;"></div>
+            </div>
+        </header>
+        <main class="notes-container">
+            <select id="notes-subject-select" class="drawer-input">
+                <option value="">Select Subject...</option>
+                <!-- Filled via JS -->
+            </select>
+            <textarea id="notes-area" class="notes-area" placeholder="Write your notes here..."></textarea>
+            <div id="notes-status" class="notes-status">Saved</div>
+        </main>
+    </div>
+
+    <!-- Saturday Selection Modal -->
+    <div id="saturday-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>Select Timetable for Saturday</h3>
+            <p>Choose a weekday timetable to apply for this date:</p>
+            <div class="day-options">
+                <button class="day-btn" onclick="applySaturday(1)">Monday</button>
+                <button class="day-btn" onclick="applySaturday(2)">Tuesday</button>
+                <button class="day-btn" onclick="applySaturday(3)">Wednesday</button>
+                <button class="day-btn" onclick="applySaturday(4)">Thursday</button>
+                <button class="day-btn" onclick="applySaturday(5)">Friday</button>
+            </div>
+            <button class="btn-secondary" onclick="closeSaturdayModal()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Profile Drawer -->
+    <div id="profile-overlay" class="drawer-overlay hidden"></div>
+    <div id="profile-drawer" class="drawer">
+        <div class="drawer-header">
+            <h2>Profile</h2>
+            <button id="close-profile" class="icon-btn">✕</button>
+        </div>
+        <div class="drawer-content">
+            <div class="profile-upload">
+                <input type="file" id="avatar-input" accept="image/*" hidden>
+                <div id="avatar-preview" class="profile-preview">
+                    <!-- JS Injected -->
+                </div>
+                <label for="avatar-input" class="upload-label">Change Photo</label>
+            </div>
+
+            <div class="form-group">
+                <label>Display Name (Optional)</label>
+                <input type="text" id="profile-name" class="drawer-input" placeholder="e.g. John Doe">
+            </div>
+
+            <button id="save-profile-btn" class="btn-primary">Save Profile</button>
+            <button id="change-timetable-btn" class="profile-action-row danger">🔄 Change Timetable</button>
+        </div>
+    </div>
+
+    <!-- Subscription Lock Overlay -->
+    <div id="subscription-overlay" class="subscription-overlay hidden">
+        <div class="subscription-card">
+            <div class="lock-icon">🔒</div>
+            <h2 class="lock-title">Your Trial Has Ended</h2>
+            <p class="lock-subtitle">Upgrade to continue tracking attendance</p>
+
+            <div class="lock-plan-info">
+                <span id="lock-plan-name">Trial</span>
+                <span id="lock-expiry-text"></span>
+            </div>
+
+            <div class="upgrade-options">
+                <button class="upgrade-btn upgrade-monthly" id="upgrade-monthly-btn">
+                    <span class="upgrade-plan-name">Monthly</span>
+                    <span class="upgrade-price">₹10 / month</span>
+                    <span class="upgrade-desc">Full access for 30 days</span>
+                </button>
+                <button class="upgrade-btn upgrade-semester" id="upgrade-semester-btn">
+                    <span class="upgrade-plan-name">Semester ⭐</span>
+                    <span class="upgrade-price">₹29 / 6 months</span>
+                    <span class="upgrade-desc">Best value — save 52%</span>
+                </button>
+            </div>
+
+            <button class="lock-logout-btn" id="lock-logout-btn">
+                Sign out &rarr;
+            </button>
+        </div>
+    </div>
+
+    <!-- ─── Reset Timetable Modal ──────────────────────────────────────────── -->
+    <div id="reset-timetable-modal" class="modal-overlay hidden">
+        <div class="modal-content reset-tt-modal-content">
+            <h3>Reset Timetable</h3>
+            <p class="reset-tt-desc">This will remove your current timetable setup.<br>Your subscription will not be affected.</p>
+
+            <div class="form-group" style="margin-top:16px;">
+                <label for="reset-password-input">Password</label>
+                <input type="password" id="reset-password-input" class="drawer-input" placeholder="Enter your account password" autocomplete="current-password">
+                <span class="field-error hidden" id="err-reset-password">Incorrect password. Please try again.</span>
+            </div>
+
+            <div class="reset-tt-actions">
+                <button id="reset-tt-cancel-btn" class="btn-secondary" style="flex:1;">Cancel</button>
+                <button id="reset-tt-confirm-btn" class="btn-danger" style="flex:1;">Confirm Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(reg => console.log('SW Registered'))
+                .catch(err => console.error('SW Error', err));
+        }
+    </script>
+</body>
+
+</html>

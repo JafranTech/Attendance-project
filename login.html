@@ -251,7 +251,7 @@
 
         // ── Redirect if already logged in ─────────────────────────────────────
         if (localStorage.getItem('token')) {
-            window.location.replace('index.html');
+            window.location.replace('dashboard.html');
         }
 
         // ── Login form logic ─────────────────────────────────────────────────
@@ -310,7 +310,7 @@
                 }
 
                 // Redirect to main app
-                window.location.replace('index.html');
+                window.location.replace('dashboard.html');
 
             } catch (err) {
                 showError('Network error. Please check your connection.');
