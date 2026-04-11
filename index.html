@@ -625,6 +625,10 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 2rem; font-weight: 800; color: var(--void);
       border: 3px solid var(--border);
+      overflow: hidden;
+    }
+    .team-img img {
+      width: 100%; height: 100%; object-fit: cover;
     }
     .team-name { font-size: 1.2rem; font-weight: 700; margin-bottom: 6px; }
     .team-role { font-size: 0.8rem; color: var(--muted); font-family: var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; }
@@ -695,6 +699,7 @@
     <li><a href="#features">Home</a></li>
     <li><a href="#demo">Features</a></li>
     <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#team">Team</a></li>
     <li><a href="#contact">Contact</a></li>
   </ul>
   <div class="nav-actions">
@@ -1037,17 +1042,17 @@
   <h2 class="section-h2">The minds behind <span class="drama">AttendEase</span></h2>
   <div class="team-grid">
     <div class="team-card reveal">
-      <div class="team-img">MJ</div>
+      <div class="team-img"><img src="assets/jafran.jpeg" alt="Mohamed Jafran"></div>
       <div class="team-name">Mohamed Jafran</div>
       <div class="team-role">Lead Developer</div>
     </div>
     <div class="team-card reveal" style="animation-delay:0.1s">
-      <div class="team-img">MJ</div>
+      <div class="team-img"><img src="assets/jasam.jpeg" alt="Mohamed Jasam"></div>
       <div class="team-name">Mohamed Jasam</div>
       <div class="team-role">Product Designer</div>
     </div>
     <div class="team-card reveal" style="animation-delay:0.2s">
-      <div class="team-img">MF</div>
+      <div class="team-img"><img src="assets/Fazil.jpeg" alt="Mohamed Fazil"></div>
       <div class="team-name">Mohamed Fazil</div>
       <div class="team-role">System Architect</div>
     </div>
@@ -1101,6 +1106,7 @@
     <div class="footer-col">
       <h4>Connect</h4>
       <a href="https://github.com/JafranTech" target="_blank">GitHub</a>
+      <a href="#team">Team</a>
       <a href="#contact">Contact</a>
       <a href="#">Privacy</a>
     </div>
