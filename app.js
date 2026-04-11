@@ -280,29 +280,7 @@ async function checkSubscriptionStatus() {
             return { allowed: false, days_remaining: 0, plan: data.plan };
         }
 
-        // Active — inject plan badge into header
-        const badge = document.getElementById('plan-badge');
-        if (badge) {
-            const plan = data.plan || 'trial';
-            const days = data.days_remaining || 0;
-
-            if (plan === 'trial') {
-                badge.textContent = `🎯 Trial – ${days}d left`;
-                badge.className = 'plan-badge badge-trial';
-            } else if (plan === 'monthly') {
-                badge.textContent = `✅ Monthly – ${days}d`;
-                badge.className = 'plan-badge badge-active';
-            } else if (plan === 'semester') {
-                badge.textContent = `✅ Semester – ${days}d`;
-                badge.className = 'plan-badge badge-active';
-            }
-            badge.classList.remove('hidden');
-            badge.style.cursor = 'pointer';
-            badge.title = 'View your plan';
-            badge.addEventListener('click', () => {
-                window.location.href = 'plans.html';
-            });
-        }
+        // Subscription status is now handled by renderProfileUI in the drawer
 
         return { allowed: true, days_remaining: data.days_remaining || 0, plan: data.plan };
     } catch (err) {
@@ -511,7 +489,20 @@ async function init() {
     // ── Step 4: Render profile chip with real account name + sub info ─────
     renderProfileUI(subResult);
 
-    // ── Step 5: Drawer Action Listeners ───────────────────────────────────
+    if (profileTrigger) {
+        profileTrigger.addEventListener('click', () => {
+            profileDrawer.classList.add('active');
+            if (profileOverlay) profileOverlay.classList.add('active');
+        });
+    }
+
+    const managePlanBtn = document.getElementById('manage-plan-btn');
+    if (managePlanBtn) {
+        managePlanBtn.addEventListener('click', () => {
+            window.location.href = 'plans.html';
+        });
+    }
+
     if (logoutBtnDrawer) {
         logoutBtnDrawer.addEventListener('click', () => {
             if (confirm('Are you sure you want to log out?')) {
@@ -959,38 +950,46 @@ function renderProfileUI(subResult) {
 
     const initial = accountName.charAt(0).toUpperCase();
 
-    // 1. Update Header Chip
+    // 1. Update Header Trigger (Mini Avatar)
     const chipAvatar = document.getElementById('profile-chip-avatar');
-    const chipName = document.getElementById('chip-name');
-    const chipSub = document.getElementById('chip-sub');
-
     if (chipAvatar) chipAvatar.textContent = initial;
-    if (chipName) chipName.textContent = accountName;
     
+    // 2. Update Drawer Membership Section
+    const drawerPlanBadge = document.getElementById('drawer-plan-badge');
+    const drawerDaysLeft = document.getElementById('drawer-days-left');
+
     if (subResult) {
         if (subResult.days_remaining !== null) {
             const days = subResult.days_remaining;
             const plan = subResult.plan || 'trial';
             daysText = `${plan.charAt(0).toUpperCase() + plan.slice(1)} · ${days}d left`;
-            if (chipSub) {
-                chipSub.textContent = daysText;
-                chipSub.style.color = (plan === 'trial' && days <= 1) ? '#ef4444' : '';
+            
+            if (drawerPlanBadge) {
+                drawerPlanBadge.textContent = plan === 'trial' ? 'Trial' : 'Pro';
+                drawerPlanBadge.style.background = plan === 'trial' ? '#f59e0b' : '#2563eb';
             }
-        } else if (chipSub) {
-            chipSub.textContent = 'Offline';
+            if (drawerDaysLeft) {
+                drawerDaysLeft.textContent = `${days} day${days !== 1 ? 's' : ''} remaining`;
+                drawerDaysLeft.style.color = (plan === 'trial' && days <= 1) ? '#ef4444' : '';
+            }
+        } else {
+            if (drawerDaysLeft) drawerDaysLeft.textContent = 'Offline';
         }
     }
 
-    // 2. Update Drawer UI
+    // 3. Update Drawer General Info
     if (profileDisplayName) profileDisplayName.textContent = accountName;
     if (profileDisplaySub) profileDisplaySub.textContent = daysText;
     
+    // 4. Update Main Drawer Avatar Preview
     const previewImg = document.getElementById('profile-img-preview');
-    if (previewImg && profileData.avatar) {
-        previewImg.src = profileData.avatar;
-    } else if (previewImg) {
-        // Premium Fallback: White text on primary blue background
-        previewImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(accountName)}&background=2563EB&color=fff&bold=true`;
+    if (previewImg) {
+        if (profileData.avatar) {
+            previewImg.src = profileData.avatar;
+        } else {
+            // Premium Fallback: White text on primary blue background
+            previewImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(accountName)}&background=2563EB&color=fff&bold=true`;
+        }
     }
 }
 
