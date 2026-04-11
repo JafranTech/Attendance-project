@@ -8,7 +8,7 @@
 </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AttendIQ — Smart Student Attendance Tracking</title>
+  <title>AttendEase — Smart Student Attendance Tracking</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
@@ -24,6 +24,7 @@
       --cream: #F3F4F6;
       --muted: #9CA3AF;
       --border: #334155;
+      --grad-main: linear-gradient(135deg, #2563EB, #60A5FA);
       --font-head: 'Syne', sans-serif;
       --font-drama: 'DM Serif Display', serif;
       --font-mono: 'JetBrains Mono', monospace;
@@ -579,6 +580,86 @@
     .reveal { opacity: 0; transform: translateY(40px); }
     .reveal.visible { animation: revealUp 0.7s cubic-bezier(0.25,0.46,0.45,0.94) forwards; }
     @keyframes revealUp { to { opacity: 1; transform: translateY(0); } }
+
+    /* ── TEAM & CONTACT ── */
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 30px;
+      margin-top: 60px;
+    }
+    .team-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 40px 30px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+    .team-card:hover { border-color: var(--pulse); transform: translateY(-5px); }
+    .team-img {
+      width: 100px; height: 100px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--pulse), var(--neon));
+      margin: 0 auto 20px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; font-weight: 800; color: var(--void);
+      border: 3px solid var(--border);
+    }
+    .team-name { font-size: 1.2rem; font-weight: 700; margin-bottom: 6px; }
+    .team-role { font-size: 0.8rem; color: var(--muted); font-family: var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; }
+
+    .contact-container {
+      max-width: 800px;
+      margin: 60px auto 0;
+    }
+    .contact-card {
+      background: var(--grad-surface);
+      border: 1px solid var(--border);
+      border-radius: 32px;
+      padding: 50px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 24px;
+      position: relative; overflow: hidden;
+    }
+    .contact-card::before {
+      content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+      background: radial-gradient(circle at 50% 50%, rgba(37,99,235,0.1), transparent 50%);
+      pointer-events: none;
+    }
+    .contact-info { display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; margin-top: 10px; }
+    .contact-item { display: flex; flex-direction: column; gap: 4px; }
+    .contact-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; font-family: var(--font-mono); }
+    .contact-value { font-size: 1.1rem; font-weight: 600; color: var(--cream); text-decoration: none; transition: color 0.3s; }
+    .contact-value:hover { color: var(--neon); }
+
+    /* ── MOBILE NAV OVERWRITE ── */
+    @media (max-width: 900px) {
+      .pricing-grid, .testi-grid, .stats-grid { grid-template-columns: 1fr; gap: 24px; }
+      .price-card.featured { transform: scale(1); }
+      .price-card.featured:hover { transform: translateY(-6px); }
+      .stat-cell:first-child, .stat-cell:last-child { border-radius: 12px; }
+      .stat-cell { border-radius: 12px; }
+      .demo-container { grid-template-columns: 1fr; text-align: center; }
+      .demo-phone { margin-bottom: 40px; }
+      .demo-points li { justify-content: center; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 600px) {
+      .nav-actions { gap: 6px; }
+      .btn-ghost { padding: 7px 14px; font-size: 0.8rem; }
+      .btn-primary { padding: 8px 16px; font-size: 0.8rem; }
+      .hero-h1 { font-size: clamp(2.5rem, 12vw, 4rem) !important; }
+      .hero-h1 .line2 { font-size: clamp(2.8rem, 13vw, 4.5rem) !important; }
+      .contact-card { padding: 30px 20px; }
+      .footer-grid { gap: 30px; }
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+    
   </style>
 </head>
 <body>
@@ -589,7 +670,7 @@
 
 <!-- ── NAVBAR ── -->
 <nav id="navbar">
-  <a href="#" class="nav-logo">AttendIQ</a>
+  <a href="#" class="nav-logo">AttendEase</a>
   <ul class="nav-links">
     <li><a href="#features">Home</a></li>
     <li><a href="#demo">Features</a></li>
@@ -624,7 +705,7 @@
   </div>
 
   <div class="hero-content">
-    <div class="hero-tag"><span class="dot"></span> Now live for Crescent Institute Students</div>
+    <div class="hero-tag"><span class="dot"></span> Now live for Every Institute Students</div>
     <h1 class="hero-h1">
       <span class="line1">Track Attendance,</span>
       <span class="line2">Own Your Semester.</span>
@@ -797,7 +878,7 @@
       <div class="step-num">04 —</div>
       <div class="step-body">
         <div class="step-title">Install & Go Offline</div>
-        <div class="step-desc">Install AttendIQ as a PWA on your phone home screen. Works completely offline — mark attendance even in the most remote lecture halls.</div>
+        <div class="step-desc">Install AttendEase as a PWA on your phone home screen. Works completely offline — mark attendance even in the most remote lecture halls.</div>
       </div>
     </div>
   </div>
@@ -816,53 +897,53 @@
   <h2 class="section-h2">Simple, <span class="drama">student-friendly</span> plans</h2>
   <p style="color:var(--muted);font-size:0.95rem;max-width:440px;font-weight:400;line-height:1.7;margin-top:8px">No hidden fees. No subscription traps. Pay once, track all semester.</p>
   <div class="pricing-grid">
-    <!-- FREE -->
+    <!-- FREE TRIAL -->
     <div class="price-card reveal">
-      <div class="plan-name">Free</div>
-      <div class="plan-price"><sup>₹</sup>0<span class="period"> / forever</span></div>
-      <div class="plan-desc">Perfect to get started and explore all core tracking features.</div>
+      <div class="plan-name">Trial</div>
+      <div class="plan-price"><sup>₹</sup>0<span class="period"> / 2 days</span></div>
+      <div class="plan-desc">Experience every premium feature for 2 days. The perfect window to test the tracking precision.</div>
       <ul class="plan-features">
-        <li>Period-wise attendance tracking</li>
-        <li>Overall percentage dashboard</li>
-        <li>Offline PWA support</li>
-        <li>Holiday marking</li>
-        <li class="crossed">Subject-wise analytics</li>
-        <li class="crossed">Priority support</li>
-      </ul>
-      <a href="register.html" class="btn-plan btn-plan-outline">Get Started Free</a>
-    </div>
-
-    <!-- PRO — Featured -->
-    <div class="price-card featured reveal" style="animation-delay:0.1s">
-      <div class="badge">Most Popular</div>
-      <div class="plan-name">Pro</div>
-      <div class="plan-price"><sup>₹</sup>10<span class="period"> / month</span></div>
-      <div class="plan-desc">Unlock full analytics and smart alerts. Everything a serious student needs.</div>
-      <ul class="plan-features">
-        <li>Everything in Free</li>
-        <li>Subject-wise detailed analytics</li>
+        <li>Period-wise tracking</li>
+        <li>Subject-wise analytics</li>
         <li>Smart shortage warnings</li>
-        <li>Elective & batch rotation</li>
-        <li>Attendance history export</li>
+        <li>Elective & batch support</li>
+        <li>Offline PWA access</li>
         <li>Email support</li>
       </ul>
-      <a href="plans.html" class="btn-plan btn-plan-fill">Upgrade for ₹10</a>
+      <a href="register.html" class="btn-plan btn-plan-outline">Try 2 Days Free</a>
+    </div>
+
+    <!-- MONTHLY — Featured -->
+    <div class="price-card featured reveal" style="animation-delay:0.1s">
+      <div class="badge">Most Popular</div>
+      <div class="plan-name">Monthly</div>
+      <div class="plan-price"><sup>₹</sup>10<span class="period"> / 1 month</span></div>
+      <div class="plan-desc">Full access to every feature for 1 month. Everything a serious student needs to stay safe.</div>
+      <ul class="plan-features">
+        <li>Period-wise tracking</li>
+        <li>Subject-wise analytics</li>
+        <li>Smart shortage warnings</li>
+        <li>Elective & batch support</li>
+        <li>Offline PWA access</li>
+        <li>Email support</li>
+      </ul>
+      <a href="plans.html" class="btn-plan btn-plan-fill" style="background:var(--grad-main)">Get Monthly — ₹10</a>
     </div>
 
     <!-- ELITE -->
     <div class="price-card reveal" style="animation-delay:0.2s">
-      <div class="plan-name">Elite</div>
-      <div class="plan-price"><sup>₹</sup>29<span class="period"> / semester</span></div>
-      <div class="plan-desc">Best value for the entire semester. Includes every feature, no limits.</div>
+      <div class="plan-name">Semester</div>
+      <div class="plan-price"><sup>₹</sup>29<span class="period"> / 6 months</span></div>
+      <div class="plan-desc">Best value for the entire semester. Includes every feature for a full 6 months.</div>
       <ul class="plan-features">
-        <li>Everything in Pro</li>
-        <li>Semester-long coverage</li>
-        <li>Advanced predictive alerts</li>
-        <li>Multi-batch support</li>
-        <li>Data backup & restore</li>
-        <li>Priority support</li>
+        <li>Period-wise tracking</li>
+        <li>Subject-wise analytics</li>
+        <li>Smart shortage warnings</li>
+        <li>Elective & batch support</li>
+        <li>Offline PWA access</li>
+        <li>Email support</li>
       </ul>
-      <a href="plans.html" class="btn-plan btn-plan-outline">Go Elite — ₹29</a>
+      <a href="plans.html" class="btn-plan btn-plan-outline">Go Semester — ₹29</a>
     </div>
   </div>
 </section>
@@ -874,18 +955,18 @@
   <div class="testi-grid">
     <div class="testi-card reveal">
       <div class="testi-stars">★★★★★</div>
-      <div class="testi-text">"I used to manually calculate my attendance every week. AttendIQ just shows it to me automatically. The warning system literally saved me in Chemistry."</div>
-      <div class="testi-author"><div class="testi-avatar">A</div><div><div class="testi-name">Arun K.</div><div class="testi-role">3rd Year IT — Crescent</div></div></div>
+      <div class="testi-text">"I used to manually calculate my attendance every week. AttendEase just shows it to me automatically. The warning system literally saved me from a shortfall."</div>
+      <div class="testi-author"><div class="testi-avatar">A</div><div><div class="testi-name">Ayman</div><div class="testi-role">IT — Crescent</div></div></div>
     </div>
     <div class="testi-card reveal" style="animation-delay:0.1s">
       <div class="testi-stars">★★★★★</div>
-      <div class="testi-text">"Works offline in our college's bad network zones. Installed it as an app on my phone. The period-wise tracking is so accurate compared to any other app I tried."</div>
-      <div class="testi-author"><div class="testi-avatar">S</div><div><div class="testi-name">Sana M.</div><div class="testi-role">2nd Year CSE — Crescent</div></div></div>
+      <div class="testi-text">"Works offline in our college's bad network zones. The period-wise tracking is so accurate. I can track my attendance even when the internet is down."</div>
+      <div class="testi-author"><div class="testi-avatar">A</div><div><div class="testi-name">Ashik</div><div class="testi-role">IT — Crescent</div></div></div>
     </div>
     <div class="testi-card reveal" style="animation-delay:0.2s">
       <div class="testi-stars">★★★★★</div>
-      <div class="testi-text">"The elective and batch handling is what impressed me. Every other tracker assumes you have the same subjects — this one actually understands how our timetable works."</div>
-      <div class="testi-author"><div class="testi-avatar">R</div><div><div class="testi-name">Rahul V.</div><div class="testi-role">4th Year ECE — Crescent</div></div></div>
+      <div class="testi-text">"The elective and batch handling is what impressed me. Finally a tracker that actually understands how our engineering timetable works."</div>
+      <div class="testi-author"><div class="testi-avatar">H</div><div><div class="testi-name">Haafiz</div><div class="testi-role">BIO-TECH — Crescent</div></div></div>
     </div>
   </div>
 </section>
@@ -901,7 +982,7 @@
     </div>
     <div class="faq-item reveal" style="animation-delay:0.05s">
       <div class="faq-q">Can I use it without installing it as an app? <span class="faq-icon">+</span></div>
-      <div class="faq-a"><div class="faq-a-inner">Yes! AttendIQ runs in any mobile or desktop browser at students-erp.vercel.app. You can optionally install it as a PWA from your browser for a faster, app-like experience with offline support.</div></div>
+      <div class="faq-a"><div class="faq-a-inner">Yes! AttendEase runs in any mobile or desktop browser at students-erp.vercel.app. You can optionally install it as a PWA from your browser for a faster, app-like experience with offline support.</div></div>
     </div>
     <div class="faq-item reveal" style="animation-delay:0.1s">
       <div class="faq-q">How does it handle lab sessions? <span class="faq-icon">+</span></div>
@@ -929,10 +1010,59 @@
 </section>
 
 <!-- ── FOOTER ── -->
+
+<!-- ── OUR TEAM ── -->
+<section id="team">
+  <div class="section-tag">Our Team</div>
+  <h2 class="section-h2">The minds behind <span class="drama">AttendEase</span></h2>
+  <div class="team-grid">
+    <div class="team-card reveal">
+      <div class="team-img">MJ</div>
+      <div class="team-name">Mohamed Jafran</div>
+      <div class="team-role">Lead Developer</div>
+    </div>
+    <div class="team-card reveal" style="animation-delay:0.1s">
+      <div class="team-img">MJ</div>
+      <div class="team-name">Mohamed Jasam</div>
+      <div class="team-role">Product Designer</div>
+    </div>
+    <div class="team-card reveal" style="animation-delay:0.2s">
+      <div class="team-img">MF</div>
+      <div class="team-name">Mohamed Fazil</div>
+      <div class="team-role">System Architect</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CONTACT ── -->
+<section id="contact">
+  <div class="contact-container reveal">
+    <div class="contact-card">
+      <div class="section-tag">Get In Touch</div>
+      <h2 class="section-h2" style="margin-bottom:8px">Have a query or want to build something?</h2>
+      <p style="color:var(--muted);margin-bottom:20px">Our team is ready to help you optimize your student life.</p>
+      <div class="contact-info">
+        <div class="contact-item">
+          <div class="contact-label">Name</div>
+          <div class="contact-value">Mohamed Jafran S</div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-label">Phone</div>
+          <a href="tel:+917418030989" class="contact-value">+91 7418030989</a>
+        </div>
+        <div class="contact-item">
+          <div class="contact-label">Email</div>
+          <a href="mailto:mohamedjafran8629@gmail.com" class="contact-value">mohamedjafran8629@gmail.com</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <footer>
   <div class="footer-grid">
     <div class="footer-brand">
-      <div class="footer-logo">AttendIQ</div>
+      <div class="footer-logo">AttendEase</div>
       <div class="footer-tagline">Smart attendance tracking for students at B.S. Abdur Rahman Crescent Institute of Science and Technology.</div>
     </div>
     <div class="footer-col">
@@ -957,7 +1087,7 @@
   </div>
   <div class="footer-bottom">
     <div class="status-pill"><span class="status-dot"></span> All Systems Operational</div>
-    <div class="footer-legal">© 2025 AttendIQ · Built with ♥ for Crescent students</div>
+    <div class="footer-legal">© 2025 AttendEase · Developed by TeamTech</div>
   </div>
 </footer>
 
