@@ -54,14 +54,17 @@ body {
     margin: 0 auto 1rem;
     border-radius: 50%;
     overflow: hidden;
-    border: 3px solid var(--primary-color);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border: 3px solid var(--primary);
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.15);
+    cursor: pointer;
+    background: var(--bg-secondary, #f1f5f9);
 }
 
 .avatar-wrapper img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: block;
 }
 
 .avatar-edit-overlay {
@@ -69,16 +72,24 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(0,0,0,0.6);
+    background: rgba(0, 0, 0, 0.5);
     color: white;
     border: none;
-    padding: 0.5rem;
+    height: 30%;
     cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.3s;
     display: flex;
     justify-content: center;
     align-items: center;
+    transition: background 0.3s;
+}
+
+.avatar-edit-overlay svg {
+    width: 16px;
+    height: 16px;
+}
+
+.avatar-wrapper:hover .avatar-edit-overlay {
+    background: rgba(0, 0, 0, 0.7);
 }
 
 .avatar-wrapper:hover .avatar-edit-overlay {

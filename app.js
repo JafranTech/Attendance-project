@@ -523,7 +523,16 @@ async function init() {
     }
 
     if (changeAvatarBtn) {
-        changeAvatarBtn.addEventListener('click', () => {
+        changeAvatarBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            avatarInput.click();
+        });
+    }
+
+    // New: Make the whole wrapper clickable for mobile ease
+    const avatarWrapper = document.querySelector('.avatar-wrapper');
+    if (avatarWrapper) {
+        avatarWrapper.addEventListener('click', () => {
             avatarInput.click();
         });
     }
@@ -980,7 +989,8 @@ function renderProfileUI(subResult) {
     if (previewImg && profileData.avatar) {
         previewImg.src = profileData.avatar;
     } else if (previewImg) {
-        previewImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(accountName)}&background=random`;
+        // Premium Fallback: White text on primary blue background
+        previewImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(accountName)}&background=2563EB&color=fff&bold=true`;
     }
 }
 
@@ -992,7 +1002,7 @@ function renderAvatarPreview(src) {
         previewImg.src = src;
     } else {
         const name = profileDisplayName ? profileDisplayName.textContent : 'User';
-        previewImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
+        previewImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=2563EB&color=fff&bold=true`;
     }
 }
 
