@@ -1,11 +1,11 @@
 {
-    "name": "Student Attendance Tracker",
-    "short_name": "AttendApp",
-    "description": "Track your class attendance offline.",
+    "name": "AttendEase",
+    "short_name": "AttendEase",
+    "description": "Smart student attendance tracking — period-wise, offline-first, and real-time.",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#F8FAFC",
-    "theme_color": "#ffffff",
+    "background_color": "#0F172A",
+    "theme_color": "#2563EB",
     "orientation": "portrait",
     "icons": [
         {

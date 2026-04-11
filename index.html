@@ -29,6 +29,9 @@
   <meta property="twitter:image" content="https://students-erp.vercel.app/assets/logo-new.jpg" />
 
   <link rel="canonical" href="https://students-erp.vercel.app/" />
+  <link rel="icon" type="image/jpeg" href="assets/logo-new.jpg" />
+  <link rel="apple-touch-icon" href="assets/logo-new.jpg" />
+  <meta name="theme-color" content="#2563EB" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
@@ -116,6 +119,74 @@
     .nav-logo {
       font-family: var(--font-head);
       font-weight: 800;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--void);
+      color: var(--cream);
+      font-family: var(--font-head);
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* ── Custom Cursor ── */
+    #cursor {
+      position: fixed; top: 0; left: 0; z-index: 9999;
+      pointer-events: none;
+      width: 12px; height: 12px;
+      background: var(--pulse);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.3s, height 0.3s, background 0.3s;
+      mix-blend-mode: screen;
+    }
+    #cursor-ring {
+      position: fixed; top: 0; left: 0; z-index: 9998;
+      pointer-events: none;
+      width: 36px; height: 36px;
+      border: 1.5px solid rgba(37,99,235,0.5);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: all 0.12s ease;
+    }
+    body:has(a:hover) #cursor, body:has(button:hover) #cursor {
+      width: 20px; height: 20px; background: var(--neon);
+    }
+
+    /* ── Noise Overlay ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 9990;
+      pointer-events: none;
+      opacity: 0.04;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    }
+
+    /* ── NAVBAR ── */
+    nav {
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+      z-index: 1000;
+      display: flex; align-items: center; justify-content: space-between;
+      width: min(1100px, 92vw);
+      padding: 14px 24px;
+      border-radius: 100px;
+      background: rgba(6,8,16,0.5);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      transition: all 0.4s ease;
+    }
+    nav.scrolled {
+      background: rgba(6,8,16,0.85);
+      border-color: rgba(37,99,235,0.3);
+      box-shadow: 0 8px 40px rgba(37,99,235,0.1);
+    }
+    .nav-logo {
+      font-family: var(--font-head);
+      font-weight: 800;
       font-size: 1.2rem;
       background: linear-gradient(135deg, var(--pulse), var(--neon));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
@@ -126,6 +197,7 @@
       display: flex; align-items: center; gap: 6px;
       list-style: none;
     }
+    .hamburger { display: none; }
     .nav-links a {
       color: rgba(240,244,255,0.65);
       text-decoration: none;
@@ -662,6 +734,58 @@
 
     /* ── MOBILE NAV OVERWRITE ── */
     @media (max-width: 900px) {
+      nav {
+        padding: 10px 20px;
+        width: 94vw;
+        border-radius: 20px;
+      }
+      .hamburger {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        width: 30px;
+        height: 20px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        z-index: 1001;
+        margin-left: 15px;
+      }
+      .hamburger span {
+        display: block;
+        width: 100%;
+        height: 2px;
+        background: var(--cream);
+        border-radius: 10px;
+        transition: all 0.3s ease;
+      }
+      .nav-links {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 80%;
+        max-width: 300px;
+        height: 100dvh;
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(25px);
+        flex-direction: column;
+        justify-content: center;
+        gap: 20px;
+        padding: 40px;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        border-left: 1px solid var(--border);
+        z-index: 1000;
+        box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+      }
+      nav.active .nav-links {
+        right: 0;
+      }
+      nav.active .hamburger span:nth-child(1) { transform: translateY(9px) rotate(45deg); }
+      nav.active .hamburger span:nth-child(2) { opacity: 0; }
+      nav.active .hamburger span:nth-child(3) { transform: translateY(-9px) rotate(-45deg); }
+      
+      .nav-actions { margin-left: auto; }
+
       .pricing-grid, .testi-grid, .stats-grid { grid-template-columns: 1fr; gap: 24px; }
       .price-card.featured { transform: scale(1); }
       .price-card.featured:hover { transform: translateY(-6px); }
@@ -675,8 +799,8 @@
 
     @media (max-width: 600px) {
       .nav-actions { gap: 6px; }
-      .btn-ghost { padding: 7px 14px; font-size: 0.8rem; }
-      .btn-primary { padding: 8px 16px; font-size: 0.8rem; }
+      .btn-ghost { padding: 7px 12px; font-size: 0.75rem; border: none; }
+      .btn-primary { padding: 8px 14px; font-size: 0.75rem; }
       .hero-h1 { font-size: clamp(2.5rem, 12vw, 4rem) !important; }
       .hero-h1 .line2 { font-size: clamp(2.8rem, 13vw, 4.5rem) !important; }
       .contact-card { padding: 30px 20px; }
@@ -702,6 +826,11 @@
     <li><a href="#team">Team</a></li>
     <li><a href="#contact">Contact</a></li>
   </ul>
+  <button id="nav-toggle" class="hamburger" aria-label="Toggle Navigation">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
   <div class="nav-actions">
     <a href="login.html" class="btn-ghost">Login</a>
     <a href="register.html" class="btn-primary">Sign Up</a>
@@ -1034,8 +1163,6 @@
   </a>
 </section>
 
-<!-- ── FOOTER ── -->
-
 <!-- ── OUR TEAM ── -->
 <section id="team">
   <div class="section-tag">Our Team</div>
@@ -1083,7 +1210,6 @@
     </div>
   </div>
 </section>
-
 <footer>
   <div class="footer-grid">
     <div class="footer-brand">
@@ -1107,118 +1233,95 @@
       <h4>Connect</h4>
       <a href="https://github.com/JafranTech" target="_blank">GitHub</a>
       <a href="#team">Team</a>
-      <a href="#contact">Contact</a>
-      <a href="#">Privacy</a>
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="status-pill"><span class="status-dot"></span> All Systems Operational</div>
-    <div class="footer-legal">© 2025 AttendEase · Developed by TeamTech</div>
+    <div class="status-pill"><span class="status-dot"></span> Systems Operational</div>
+    <div class="footer-legal">© 2026 Developed by TeamTech. All rights reserved.</div>
   </div>
 </footer>
 
 <script>
+  // Navbar Scroll Effect
+  window.addEventListener('scroll', () => {
+    const nav = document.getElementById('navbar');
+    if (window.scrollY > 50) {
+      nav.classList.add('scrolled');
+    } else {
+      nav.classList.remove('scrolled');
+    }
+  });
+
+  // Mobile Menu Toggle
+  const navToggle = document.getElementById('nav-toggle');
+  const navbar = document.getElementById('navbar');
+  const navLinks = document.querySelectorAll('.nav-links a');
+
+  navToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    navbar.classList.toggle('active');
+  });
+
+  // Close menu when clicking outside
+  document.addEventListener('click', (e) => {
+    if (navbar.classList.contains('active') && !navbar.contains(e.target)) {
+      navbar.classList.remove('active');
+    }
+  });
+
+  navLinks.forEach(link => {
+    link.addEventListener('click', () => {
+      navbar.classList.remove('active');
+    });
+  });
+
+  // Reveal Animations on Scroll
+  const observerOptions = { threshold: 0.1 };
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) { entry.target.classList.add('visible'); }
+    });
+  }, observerOptions);
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // FAQ Toggle
+  document.querySelectorAll('.faq-item').forEach(item => {
+    item.addEventListener('click', () => {
+      item.classList.toggle('open');
+    });
+  });
+
+  // Custom Cursor
+  const cursor = document.getElementById('cursor');
+  const cursorRing = document.getElementById('cursor-ring');
+
+  document.addEventListener('mousemove', (e) => {
+    gsap.to(cursor, { x: e.clientX, y: e.clientY, duration: 0, ease: 'none' });
+    gsap.to(cursorRing, { x: e.clientX, y: e.clientY, duration: 0.15, ease: 'power2.out' });
+  });
+
+  // GSAP Animations
   gsap.registerPlugin(ScrollTrigger);
 
-  // ── Custom Cursor ──
-  const cursor = document.getElementById('cursor');
-  const ring = document.getElementById('cursor-ring');
-  let mx = 0, my = 0, rx = 0, ry = 0;
-  document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
-  function animCursor() {
-    cursor.style.left = mx + 'px'; cursor.style.top = my + 'px';
-    rx += (mx - rx) * 0.12; ry += (my - ry) * 0.12;
-    ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
-    requestAnimationFrame(animCursor);
-  }
-  animCursor();
+  // Hero Parallax
+  gsap.to('.orb-1', { scrollTrigger: { trigger: '#hero', start: 'top top', scrub: 1 }, y: 150 });
+  gsap.to('.orb-2', { scrollTrigger: { trigger: '#hero', start: 'top top', scrub: 1 }, y: -100 });
 
-  // ── Navbar scroll morph ──
-  const nav = document.getElementById('navbar');
-  ScrollTrigger.create({
-    start: 'top -60',
-    onUpdate: self => nav.classList.toggle('scrolled', self.progress > 0)
-  });
-
-  // ── Hero entrance ──
-  const ctx = gsap.context(() => {
-    gsap.from('.hero-tag', { y: 30, opacity: 0, duration: 0.8, ease: 'power3.out', delay: 0.3 });
-    gsap.from('.hero-h1 .line1', { y: 50, opacity: 0, duration: 0.9, ease: 'power3.out', delay: 0.5 });
-    gsap.from('.hero-h1 .line2', { y: 50, opacity: 0, duration: 0.9, ease: 'power3.out', delay: 0.65 });
-    gsap.from('.hero-sub', { y: 30, opacity: 0, duration: 0.8, ease: 'power3.out', delay: 0.85 });
-    gsap.from('.hero-ctas', { y: 30, opacity: 0, duration: 0.8, ease: 'power3.out', delay: 1.0 });
-    gsap.from('.sf-1', { x: 40, opacity: 0, duration: 1, ease: 'power3.out', delay: 1.2 });
-    gsap.from('.sf-2', { x: 40, opacity: 0, duration: 1, ease: 'power3.out', delay: 1.4 });
-    gsap.from('.sf-3', { x: 40, opacity: 0, duration: 1, ease: 'power3.out', delay: 1.6 });
-  });
-
-  // ── Reveal on scroll ──
-  const reveals = document.querySelectorAll('.reveal');
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
-  }, { threshold: 0.15 });
-  reveals.forEach(el => observer.observe(el));
-
-  // ── Stat counter animation ──
-  const statNums = document.querySelectorAll('.stat-n');
-  const statObs = new IntersectionObserver(entries => {
-    entries.forEach(e => {
-      if (e.isIntersecting) {
-        const el = e.target;
-        const target = parseFloat(el.textContent);
-        const suffix = el.textContent.replace(/[0-9.]/g, '');
-        let start = 0;
-        const step = target / 50;
-        const timer = setInterval(() => {
-          start = Math.min(start + step, target);
-          el.textContent = (Number.isInteger(target) ? Math.floor(start) : start.toFixed(1)) + suffix;
-          if (start >= target) clearInterval(timer);
-        }, 25);
-        statObs.unobserve(el);
-      }
-    });
-  }, { threshold: 0.5 });
-  statNums.forEach(el => statObs.observe(el));
-
-  // ── Parallax orbs ──
-  window.addEventListener('mousemove', e => {
-    const x = (e.clientX / window.innerWidth - 0.5) * 20;
-    const y = (e.clientY / window.innerHeight - 0.5) * 20;
-    document.querySelectorAll('.orb').forEach((orb, i) => {
-      const factor = (i + 1) * 0.4;
-      orb.style.transform = `translate(${x * factor}px, ${y * factor}px)`;
-    });
-  });
-
-  // ── Feature card mouse glow ──
-  document.querySelectorAll('.feat-card').forEach(card => {
-    card.addEventListener('mousemove', e => {
-      const rect = card.getBoundingClientRect();
-      card.style.setProperty('--mx', ((e.clientX - rect.left) / rect.width * 100) + '%');
-      card.style.setProperty('--my', ((e.clientY - rect.top) / rect.height * 100) + '%');
-    });
-  });
-
-  // ── FAQ accordion ──
-  document.querySelectorAll('.faq-item').forEach(item => {
-    item.querySelector('.faq-q').addEventListener('click', () => {
-      const isOpen = item.classList.contains('open');
-      document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
-      if (!isOpen) item.classList.add('open');
-    });
-  });
-
-  // ── Smooth scroll ──
-  document.querySelectorAll('a[href^="#"]').forEach(a => {
-    a.addEventListener('click', e => {
-      const target = document.querySelector(a.getAttribute('href'));
-      if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-    });
-  });
-
-  // ── GSAP ScrollTrigger parallax manifesto ──
+  // Manifesto Animations
   gsap.from('#manifesto .manifesto-old', { scrollTrigger: { trigger: '#manifesto', start: 'top 80%' }, y: 30, opacity: 0, duration: 0.8, ease: 'power3.out' });
   gsap.from('#manifesto .manifesto-new', { scrollTrigger: { trigger: '#manifesto', start: 'top 70%' }, y: 40, opacity: 0, duration: 1, ease: 'power3.out', delay: 0.2 });
+
+  // Mouse move effect for feature cards
+  document.querySelectorAll('.feat-card').forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      card.style.setProperty('--mx', x + '%');
+      card.style.setProperty('--my', y + '%');
+    });
+  });
 </script>
 </body>
 </html>
