@@ -952,7 +952,21 @@ function renderProfileUI(subResult) {
 
     // 1. Update Header Trigger (Mini Avatar)
     const chipAvatar = document.getElementById('profile-chip-avatar');
-    if (chipAvatar) chipAvatar.textContent = initial;
+    const headerAvatarImg = document.getElementById('header-avatar-img');
+    
+    if (profileData.avatar) {
+        if (headerAvatarImg) {
+            headerAvatarImg.src = profileData.avatar;
+            headerAvatarImg.classList.remove('hidden');
+        }
+        if (chipAvatar) chipAvatar.classList.add('hidden');
+    } else {
+        if (headerAvatarImg) headerAvatarImg.classList.add('hidden');
+        if (chipAvatar) {
+            chipAvatar.textContent = initial;
+            chipAvatar.classList.remove('hidden');
+        }
+    }
     
     // 2. Update Drawer Membership Section
     const drawerPlanBadge = document.getElementById('drawer-plan-badge');
@@ -995,13 +1009,29 @@ function renderProfileUI(subResult) {
 
 function renderAvatarPreview(src) {
     const previewImg = document.getElementById('profile-img-preview');
+    const headerAvatarImg = document.getElementById('header-avatar-img');
+    const chipAvatar = document.getElementById('profile-chip-avatar');
     if (!previewImg) return;
 
     if (src && src.startsWith('data:image')) {
         previewImg.src = src;
+        if (headerAvatarImg) {
+            headerAvatarImg.src = src;
+            headerAvatarImg.classList.remove('hidden');
+        }
+        if (chipAvatar) chipAvatar.classList.add('hidden');
     } else {
         const name = profileDisplayName ? profileDisplayName.textContent : 'User';
-        previewImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=2563EB&color=fff&bold=true`;
+        const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=2563EB&color=fff&bold=true`;
+        previewImg.src = fallback;
+        if (headerAvatarImg) {
+            headerAvatarImg.src = '';
+            headerAvatarImg.classList.add('hidden');
+        }
+        if (chipAvatar) {
+            chipAvatar.textContent = name.charAt(0).toUpperCase();
+            chipAvatar.classList.remove('hidden');
+        }
     }
 }
 
