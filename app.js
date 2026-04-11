@@ -208,7 +208,7 @@ const screens = {
 const deptForm = document.getElementById('department-form');
 const setupForm = document.getElementById('setup-form');
 const setupBioForm = document.getElementById('setup-form-bio');
-const resetBtn = document.getElementById('reset-btn');
+const resetBtn = document.getElementById('reset-btn-drawer');
 
 // Main App Navigation
 const dateScroll = document.getElementById('date-scroll');
@@ -230,14 +230,17 @@ const profileOverlay = document.getElementById('profile-overlay');
 const closeProfileBtn = document.getElementById('close-profile');
 const avatarInput = document.getElementById('avatar-input');
 const avatarPreview = document.getElementById('avatar-preview');
-const profileNameInput = document.getElementById('profile-name');
+const profileDisplayName = document.getElementById('profile-display-name');
+const profileDisplaySub = document.getElementById('profile-display-sub');
 const saveProfileBtn = document.getElementById('save-profile-btn');
 const changeTTBtn = document.getElementById('change-timetable-btn');
+const changeAvatarBtn = document.getElementById('change-avatar-btn');
 const headerRight = document.querySelector('.header-right');
-const themeToggle = document.getElementById('theme-toggle');
+const themeToggle = document.getElementById('theme-toggle-drawer');
 
 // Notes Elements
-const notesTrigger = document.getElementById('notes-trigger');
+const notesTrigger = document.getElementById('notes-trigger-drawer');
+const logoutBtnDrawer = document.getElementById('logout-btn-drawer');
 const notesSubjectSelect = document.getElementById('notes-subject-select');
 const notesArea = document.getElementById('notes-area');
 const notesStatus = document.getElementById('notes-status');
@@ -508,22 +511,21 @@ async function init() {
     // ── Step 4: Render profile chip with real account name + sub info ─────
     renderProfileUI(subResult);
 
-    // ── Step 5: Inject logout button into header ──────────────────────────
-    if (headerRight && !document.getElementById('logout-btn')) {
-        const logoutBtn = document.createElement('button');
-        logoutBtn.id = 'logout-btn';
-        logoutBtn.className = 'icon-btn logout-btn';
-        logoutBtn.setAttribute('aria-label', 'Logout');
-        logoutBtn.title = 'Logout';
-        logoutBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`;
-        logoutBtn.addEventListener('click', () => {
+    // ── Step 5: Drawer Action Listeners ───────────────────────────────────
+    if (logoutBtnDrawer) {
+        logoutBtnDrawer.addEventListener('click', () => {
             if (confirm('Are you sure you want to log out?')) {
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
                 window.location.replace('login.html');
             }
         });
-        headerRight.insertBefore(logoutBtn, headerRight.firstChild);
+    }
+
+    if (changeAvatarBtn) {
+        changeAvatarBtn.addEventListener('click', () => {
+            avatarInput.click();
+        });
     }
 
     // ── Step 6: Show app or setup screen ──────────────────────────────────
@@ -636,25 +638,32 @@ function saveData() {
 // --- Theme Logic ---
 function loadTheme() {
     const theme = localStorage.getItem(THEME_KEY);
-    if (theme === 'dark') {
+    const isDark = (theme === 'dark');
+    
+    if (isDark) {
         document.body.classList.add('dark-mode');
-        themeToggle.textContent = '☀️';
     } else {
         document.body.classList.remove('dark-mode');
-        themeToggle.textContent = '🌙';
+    }
+
+    if (themeToggle) {
+        themeToggle.checked = isDark;
     }
 }
 
-themeToggle.addEventListener('click', () => {
-    document.body.classList.toggle('dark-mode');
-    const isDark = document.body.classList.contains('dark-mode');
+if (themeToggle) {
+    themeToggle.addEventListener('change', () => {
+        const isDark = themeToggle.checked;
+        if (isDark) {
+            document.body.classList.add('dark-mode');
+        } else {
+            document.body.classList.remove('dark-mode');
+        }
 
-    // Update Icon
-    themeToggle.textContent = isDark ? '☀️' : '🌙';
-
-    // Save Persistence
-    localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
-});
+        // Save Persistence
+        localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
+    });
+}
 
 // --- Navigation ---
 function _hideAllScreens() {
@@ -901,8 +910,12 @@ function openProfile() {
     profileOverlay.classList.remove('hidden');
     setTimeout(() => profileOverlay.classList.add('active'), 10);
 
-    // Set inputs
-    profileNameInput.value = profileData.name || '';
+    // Sync Theme Toggle State
+    const theme = localStorage.getItem(THEME_KEY);
+    if (themeToggle) {
+        themeToggle.checked = (theme === 'dark');
+    }
+
     renderAvatarPreview(profileData.avatar);
 }
 
@@ -915,18 +928,11 @@ function closeProfile() {
 }
 
 function saveProfile() {
-    const newName = profileNameInput.value.trim();
-    // Get image source from preview div
-    const imgInfo = avatarPreview.querySelector('img');
+    // Sync Avatar from preview
+    const imgInfo = document.getElementById('profile-img-preview');
     const newAvatar = imgInfo ? imgInfo.src : null;
 
-    // Check if it's the default placeholder (we store null if default)
-    // Actually we can just store the base64 string
-
-    profileData = {
-        name: newName,
-        avatar: newAvatar
-    };
+    profileData.avatar = newAvatar;
 
     localStorage.setItem(PROFILE_KEY, JSON.stringify(profileData));
     renderProfileUI();
@@ -934,8 +940,9 @@ function saveProfile() {
 }
 
 function renderProfileUI(subResult) {
-    // Get real account name from registered user (server-side)
     let accountName = 'User';
+    let daysText = '';
+    
     try {
         const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
         accountName = storedUser.name || profileData.name || 'User';
@@ -943,47 +950,49 @@ function renderProfileUI(subResult) {
 
     const initial = accountName.charAt(0).toUpperCase();
 
-    // Update profile chip in header
+    // 1. Update Header Chip
     const chipAvatar = document.getElementById('profile-chip-avatar');
     const chipName = document.getElementById('chip-name');
     const chipSub = document.getElementById('chip-sub');
 
     if (chipAvatar) chipAvatar.textContent = initial;
     if (chipName) chipName.textContent = accountName;
-    if (chipSub && subResult) {
+    
+    if (subResult) {
         if (subResult.days_remaining !== null) {
             const days = subResult.days_remaining;
             const plan = subResult.plan || 'trial';
-            if (plan === 'trial') {
-                chipSub.textContent = `Trial · ${days}d left`;
-                chipSub.style.color = days <= 1 ? '#ef4444' : '#f59e0b';
-            } else {
-                chipSub.textContent = `${plan.charAt(0).toUpperCase() + plan.slice(1)} · ${days}d`;
-                chipSub.style.color = '#22c55e';
+            daysText = `${plan.charAt(0).toUpperCase() + plan.slice(1)} · ${days}d left`;
+            if (chipSub) {
+                chipSub.textContent = daysText;
+                chipSub.style.color = (plan === 'trial' && days <= 1) ? '#ef4444' : '';
             }
-        } else {
+        } else if (chipSub) {
             chipSub.textContent = 'Offline';
         }
     }
 
-    // Also update avatar in drawer preview
-    const avatarSrc = profileData.avatar;
-    const getAvatarHTML = (src) => {
-        if (src && src.startsWith('data:image')) {
-            return `<img src="${src}" alt="Profile">`;
-        }
-        return `<div class="default-avatar" style="font-size: 1rem">${initial}</div>`;
-    };
-    // Trigger element was updated with chip HTML in index.html — no innerHTML needed
+    // 2. Update Drawer UI
+    if (profileDisplayName) profileDisplayName.textContent = accountName;
+    if (profileDisplaySub) profileDisplaySub.textContent = daysText;
+    
+    const previewImg = document.getElementById('profile-img-preview');
+    if (previewImg && profileData.avatar) {
+        previewImg.src = profileData.avatar;
+    } else if (previewImg) {
+        previewImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(accountName)}&background=random`;
+    }
 }
 
 function renderAvatarPreview(src) {
-    const initial = profileNameInput.value ? profileNameInput.value.charAt(0).toUpperCase() : (profileData.name ? profileData.name.charAt(0).toUpperCase() : 'U');
+    const previewImg = document.getElementById('profile-img-preview');
+    if (!previewImg) return;
 
     if (src && src.startsWith('data:image')) {
-        avatarPreview.innerHTML = `<img src="${src}" alt="Preview">`;
+        previewImg.src = src;
     } else {
-        avatarPreview.innerHTML = `<div class="default-avatar" style="font-size: 2.5rem; width: 100%; height: 100%;">${initial}</div>`;
+        const name = profileDisplayName ? profileDisplayName.textContent : 'User';
+        previewImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
     }
 }
 
